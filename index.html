@@ -2,13 +2,13 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>스트레스 해소 피아노 🎹</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎹</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;500;700;900&family=Cormorant+Garamond:wght@600;700&display=swap" rel="stylesheet">
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
-  body{background:#08080c;min-height:100vh;display:flex;flex-direction:column;font-family:'Noto Sans KR',sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none}
+  body{background:#08080c;min-height:100vh;display:flex;flex-direction:column;font-family:'Noto Sans KR',sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:manipulation}
   canvas#bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
   .rage-overlay{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:0;opacity:0;transition:opacity .15s}
   .rage-overlay.active{opacity:1}
@@ -42,6 +42,28 @@
   .multiplier{font-size:.5rem;color:rgba(255,255,255,.25);font-weight:300;letter-spacing:1px;padding:2px 8px;border-radius:8px;background:rgba(255,255,255,.03)}
   .multiplier.boosted{color:#f59e0b;background:rgba(255,180,0,.08)}
   .song-indicator{font-size:.5rem;color:rgba(255,255,255,.3);font-weight:300;letter-spacing:1px;padding:2px 8px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05)}
+
+  /* ─── Level HUD ─── */
+  .level-hud{display:flex;align-items:center;gap:6px;padding:3px 10px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
+  .level-badge{font-size:.85rem;line-height:1}
+  .level-info{display:flex;flex-direction:column;gap:1px}
+  .level-num{font-size:.55rem;font-weight:700;color:rgba(255,255,255,.85);letter-spacing:1px}
+  .level-title{font-size:.4rem;color:rgba(255,255,255,.4);letter-spacing:.5px}
+  .xp-bar{width:60px;height:3px;border-radius:2px;background:rgba(255,255,255,.06);overflow:hidden}
+  .xp-bar-fill{height:100%;width:0%;border-radius:2px;transition:width .25s ease;background:linear-gradient(90deg,#3b82f6,#8b5cf6)}
+
+  /* ─── Tier Piano Effects ─── */
+  .tier-apprentice .white-key:active,.tier-apprentice .white-key.active{box-shadow:0 0 12px rgba(139,92,246,.3)}
+  .tier-apprentice .black-key:active,.tier-apprentice .black-key.active{box-shadow:0 0 10px rgba(139,92,246,.4)}
+  .tier-performer .piano-fallboard{border-bottom:1px solid rgba(255,215,0,.25)}
+  .tier-virtuoso .white-key{transition:box-shadow .15s}
+  .tier-virtuoso .white-key:hover{box-shadow:0 0 8px rgba(255,215,0,.15)}
+  .tier-grandmaster .piano-body{box-shadow:0 0 30px rgba(255,111,216,.08)}
+  .tier-legendary .piano-body{box-shadow:0 0 40px rgba(255,215,0,.15);border:1px solid rgba(255,215,0,.1)}
+
+  /* ─── Key Unlock Animation ─── */
+  @keyframes keyUnlock{0%{transform:scaleY(0);opacity:0}60%{transform:scaleY(1.05);opacity:1}100%{transform:scaleY(1);opacity:1}}
+  .key-new{animation:keyUnlock .6s ease-out forwards;transform-origin:bottom}
 
   /* ─── Shop Button ─── */
   .shop-btn{padding:5px 14px;border-radius:14px;background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.15);color:rgba(255,215,0,.6);font-size:.65rem;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .2s;letter-spacing:1px}
@@ -125,14 +147,15 @@
 
   .piano-felt{width:100%;height:5px;background:#6e1212;border-bottom:1px solid #3a0808}
 
-  .piano-keybed{display:flex;justify-content:center;width:100%;background:#020202;padding:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .piano-keybed{display:flex;justify-content:center;width:100%;background:#020202;padding:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;touch-action:pan-x}
   .piano-keybed::-webkit-scrollbar{display:none}
-  .keys-container{display:flex;position:relative}
+  .keys-container{display:flex;position:relative;touch-action:none}
 
   .white-key{
     width:52px;height:230px;cursor:pointer;
     position:relative;z-index:1;margin:0;flex-shrink:0;
     border:none;border-radius:0 0 4px 4px;
+    touch-action:none;
   }
   .white-key .label{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);pointer-events:none;text-align:center}
   .white-key .label .key-char{display:block;font-size:.6rem;font-weight:700;color:rgba(80,70,60,.35)}
@@ -144,6 +167,7 @@
     width:32px;height:148px;
     position:absolute;z-index:2;cursor:pointer;
     border:none;border-radius:0 0 3px 3px;
+    touch-action:none;
   }
   .black-key .label{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);font-size:.4rem;font-weight:700;pointer-events:none}
 
@@ -335,6 +359,14 @@
 
 <div class="top-hud" id="mainContent">
   <span class="brand" id="title">STRESS PIANO</span>
+  <div class="level-hud" id="levelHud">
+    <span class="level-badge" id="levelBadge">🎹</span>
+    <div class="level-info">
+      <span class="level-num" id="levelNum">Lv.1</span>
+      <span class="level-title" id="levelTitle">초보 피아니스트</span>
+      <div class="xp-bar"><div class="xp-bar-fill" id="xpFill"></div></div>
+    </div>
+  </div>
   <div class="currency" id="currencyDisplay"><span class="note-icon">♪</span><span id="currencyAmount">0</span></div>
   <div class="multiplier" id="multiplierDisplay">×1</div>
   <div class="song-indicator" id="songIndicator" style="display:none">🎶 <span id="songName"></span></div>
@@ -417,7 +449,7 @@ if(equipped.cat===false) equipped.cat=null;
 if(!owned.songs)        owned.songs=['random'];
 if(!equipped.song)      equipped.song='random';
 if(equipped.autoTapOn===undefined) equipped.autoTapOn=true;
-function saveState(){localStorage.setItem('sp_save',JSON.stringify({notes,totalNotes,equipped,owned,stats,lastOnline:Date.now()}))}
+function saveState(){localStorage.setItem('sp_save',JSON.stringify({notes,totalNotes,equipped,owned,stats,playerLevel,playerXP,lastOnline:Date.now()}))}
 
 // ═══ ACHIEVEMENTS ═══
 const ACH_DEFS=[
@@ -430,6 +462,9 @@ const ACH_DEFS=[
   {id:'keys_1k',    name:'연습생',           desc:'총 1,000번 연주',     icon:'⌨️', check:()=>stats.keys>=1000,           reward:100},
   {id:'keys_10k',   name:'타건의 신',        desc:'총 10,000번 연주',    icon:'⚡', check:()=>stats.keys>=10000,          reward:500},
   {id:'auto_first', name:'방치의 시작',      desc:'자동 연주기 구매',    icon:'🤖', check:()=>owned.autoTappers.length>0, reward:300},
+  {id:'level_25',   name:'연주자',          desc:'레벨 25 달성',        icon:'🎼', check:()=>playerLevel>=25,            reward:2000},
+  {id:'level_50',   name:'명인',            desc:'레벨 50 달성',        icon:'🏅', check:()=>playerLevel>=50,            reward:5000},
+  {id:'level_100',  name:'전설의 피아니스트', desc:'레벨 100 달성',       icon:'💎', check:()=>playerLevel>=100,           reward:20000},
 ];
 function checkAchievements(){
   ACH_DEFS.forEach(a=>{
@@ -449,22 +484,22 @@ const shopItems={
     {id:'triangle',  name:'Bright',   desc:'triangle wave',     icon:'🔔', cost:50},
     {id:'warm',      name:'Warm',     desc:'rich harmonics',    icon:'☕', cost:150},
     {id:'celesta',   name:'Celesta',  desc:'music box',         icon:'✨', cost:300},
-    {id:'synth',     name:'Synth',    desc:'ambient pad',       icon:'🌌', cost:500},
-    {id:'organ',     name:'Organ',    desc:'pipe organ',        icon:'⛪', cost:800},
+    {id:'synth',     name:'Synth',    desc:'ambient pad',       icon:'🌌', cost:500,  reqLevel:10},
+    {id:'organ',     name:'Organ',    desc:'pipe organ',        icon:'⛪', cost:800,  reqLevel:20},
   ],
   particles:[
     {id:'default',   name:'Default',  desc:'mode colors',       icon:'✦', cost:0},
     {id:'sakura',    name:'Sakura',   desc:'pink petals',       icon:'🌸', cost:100},
     {id:'stars',     name:'Stars',    desc:'shooting stars',    icon:'⭐', cost:200},
     {id:'snow',      name:'Snow',     desc:'white snow',        icon:'❄️', cost:350},
-    {id:'firefly',   name:'Firefly',  desc:'warm glow',         icon:'🟡', cost:500},
-    {id:'aurora',    name:'Aurora',   desc:'rainbow curtain',   icon:'🌈', cost:800},
+    {id:'firefly',   name:'Firefly',  desc:'warm glow',         icon:'🟡', cost:500,  reqLevel:10},
+    {id:'aurora',    name:'Aurora',   desc:'rainbow curtain',   icon:'🌈', cost:800,  reqLevel:15},
   ],
   skins:[
     {id:'ivory',     name:'Ivory',    desc:'classic keys',      icon:'🎹', cost:0},
-    {id:'marble',    name:'Marble',   desc:'stone texture',     icon:'🤍', cost:200},
-    {id:'midnight',  name:'Midnight', desc:'dark blue',         icon:'🌙', cost:400},
-    {id:'rosegold',  name:'Rose Gold',desc:'warm blush',        icon:'🌹', cost:600},
+    {id:'marble',    name:'Marble',   desc:'stone texture',     icon:'🤍', cost:200,  reqLevel:5},
+    {id:'midnight',  name:'Midnight', desc:'dark blue',         icon:'🌙', cost:400,  reqLevel:15},
+    {id:'rosegold',  name:'Rose Gold',desc:'warm blush',        icon:'🌹', cost:600,  reqLevel:25},
   ],
   modes:[
     {id:'dreamy',    name:'Dreamy',   desc:'soft reverb',       icon:'🌙', cost:0},
@@ -473,8 +508,8 @@ const shopItems={
   ],
   autoTappers:[
     {id:'auto_lv1',name:'자동 연주 Ⅰ', desc:'1회/초 자동 연주', icon:'🤖', cost:2000,  rate:1, prereq:null},
-    {id:'auto_lv2',name:'자동 연주 Ⅱ', desc:'3회/초 자동 연주', icon:'🦾', cost:8000,  rate:3, prereq:'auto_lv1'},
-    {id:'auto_lv3',name:'자동 연주 Ⅲ', desc:'8회/초 자동 연주', icon:'⚡', cost:30000, rate:8, prereq:'auto_lv2'},
+    {id:'auto_lv2',name:'자동 연주 Ⅱ', desc:'3회/초 자동 연주', icon:'🦾', cost:8000,  rate:3, prereq:'auto_lv1', reqLevel:20},
+    {id:'auto_lv3',name:'자동 연주 Ⅲ', desc:'8회/초 자동 연주', icon:'⚡', cost:30000, rate:8, prereq:'auto_lv2', reqLevel:40},
   ],
   cats:[
     {id:'pixel_cat',name:'피아노 고양이',desc:'고양이가 건반을 밟아요',icon:'🐱',cost:5000},
@@ -492,32 +527,194 @@ const shopItems={
 
 const SONGS={
   random:null,
-  twinkle:[12,12,19,19,21,21,19, 17,17,16,16,14,14,12, 19,19,17,17,16,16,14, 19,19,17,17,16,16,14, 12,12,19,19,21,21,19, 17,17,16,16,14,14,12],
-  birthday:[12,12,14,12,17,16, 12,12,14,12,19,17, 12,12,24,21,17,16,14, 22,22,21,17,19,17],
-  ode_to_joy:[16,16,17,19,19,17,16,14, 12,12,14,16,16,14,14, 16,16,17,19,19,17,16,14, 12,12,14,16,14,12,12],
-  fur_elise:[16,15,16,15,16,11,14,12,9, 0,4,9,11, 12,16,15,16,15,16,11,14,12,9, 0,4,9,11,12],
-  canon:[16,14,12,11,9,7,9,11, 12,11,12,14,16,14,12,11, 9,7,9,11,12,14,16,19, 17,16,14,12,14,12,11,9],
-  turkish:[11,21,20,21, 12,21,20,21, 12,24,23,24,26,24, 23,21,23,21,19,21, 19,17,16,17,19,17, 16,14,12,14,16],
+  twinkle:['C4','C4','G4','G4','A4','A4','G4', 'F4','F4','E4','E4','D4','D4','C4', 'G4','G4','F4','F4','E4','E4','D4', 'G4','G4','F4','F4','E4','E4','D4', 'C4','C4','G4','G4','A4','A4','G4', 'F4','F4','E4','E4','D4','D4','C4'],
+  birthday:['C4','C4','D4','C4','F4','E4', 'C4','C4','D4','C4','G4','F4', 'C4','C4','C5','A4','F4','E4','D4', 'A#4','A#4','A4','F4','G4','F4'],
+  ode_to_joy:['E4','E4','F4','G4','G4','F4','E4','D4', 'C4','C4','D4','E4','E4','D4','D4', 'E4','E4','F4','G4','G4','F4','E4','D4', 'C4','C4','D4','E4','D4','C4','C4'],
+  fur_elise:['E4','D#4','E4','D#4','E4','B3','D4','C4','A3', 'C3','E3','A3','B3', 'C4','E4','D#4','E4','D#4','E4','B3','D4','C4','A3', 'C3','E3','A3','B3','C4'],
+  canon:['E4','D4','C4','B3','A3','G3','A3','B3', 'C4','B3','C4','D4','E4','D4','C4','B3', 'A3','G3','A3','B3','C4','D4','E4','G4', 'F4','E4','D4','C4','D4','C4','B3','A3'],
+  turkish:['B3','A4','G#4','A4', 'C4','A4','G#4','A4', 'C4','C5','B4','C5','E5','C5', 'B4','A4','B4','A4','G4','A4', 'G4','F4','E4','F4','G4','F4', 'E4','D4','C4','D4','E4'],
 };
 
-// ═══ NOTE DATA ═══
-const noteData=[
-  {note:'C3',freq:130.81,type:'white',key:'z',hand:'left'},{note:'C#3',freq:138.59,type:'black',key:'s',hand:'left'},
-  {note:'D3',freq:146.83,type:'white',key:'x',hand:'left'},{note:'D#3',freq:155.56,type:'black',key:'d',hand:'left'},
-  {note:'E3',freq:164.81,type:'white',key:'c',hand:'left'},{note:'F3',freq:174.61,type:'white',key:'v',hand:'left'},
-  {note:'F#3',freq:185.00,type:'black',key:'g',hand:'left'},{note:'G3',freq:196.00,type:'white',key:'b',hand:'left'},
-  {note:'G#3',freq:207.65,type:'black',key:'h',hand:'left'},{note:'A3',freq:220.00,type:'white',key:'n',hand:'left'},
-  {note:'A#3',freq:233.08,type:'black',key:'j',hand:'left'},{note:'B3',freq:246.94,type:'white',key:'m',hand:'left'},
-  {note:'C4',freq:261.63,type:'white',key:'q',hand:'right'},{note:'C#4',freq:277.18,type:'black',key:'2',hand:'right'},
-  {note:'D4',freq:293.66,type:'white',key:'w',hand:'right'},{note:'D#4',freq:311.13,type:'black',key:'3',hand:'right'},
-  {note:'E4',freq:329.63,type:'white',key:'e',hand:'right'},{note:'F4',freq:349.23,type:'white',key:'r',hand:'right'},
-  {note:'F#4',freq:369.99,type:'black',key:'5',hand:'right'},{note:'G4',freq:392.00,type:'white',key:'t',hand:'right'},
-  {note:'G#4',freq:415.30,type:'black',key:'6',hand:'right'},{note:'A4',freq:440.00,type:'white',key:'y',hand:'right'},
-  {note:'A#4',freq:466.16,type:'black',key:'7',hand:'right'},{note:'B4',freq:493.88,type:'white',key:'u',hand:'right'},
-  {note:'C5',freq:523.25,type:'white',key:'i',hand:'right'},{note:'C#5',freq:554.37,type:'black',key:'9',hand:'right'},
-  {note:'D5',freq:587.33,type:'white',key:'o',hand:'right'},{note:'D#5',freq:622.25,type:'black',key:'0',hand:'right'},
-  {note:'E5',freq:659.26,type:'white',key:'p',hand:'right'},
+// ═══ LEVEL SYSTEM ═══
+let playerLevel=_saved?.playerLevel??1;
+let playerXP=_saved?.playerXP??0;
+const LEVEL_TIERS=[
+  {min:1,max:10,name:'초보 피아니스트',badge:'🎹',gradient:'linear-gradient(90deg,#3b82f6,#8b5cf6)',bg:{r:8,g:8,b:12}},
+  {min:11,max:25,name:'수련생',badge:'🎵',gradient:'linear-gradient(90deg,#8b5cf6,#b8a9c9)',bg:{r:10,g:8,b:16}},
+  {min:26,max:50,name:'연주자',badge:'🎼',gradient:'linear-gradient(90deg,#f59e0b,#f7a072)',bg:{r:14,g:10,b:8}},
+  {min:51,max:75,name:'명인',badge:'🏅',gradient:'linear-gradient(90deg,#ffd700,#ffaa00)',bg:{r:12,g:12,b:6}},
+  {min:76,max:99,name:'대가',badge:'👑',gradient:'linear-gradient(90deg,#ff6fd8,#ff2200)',bg:{r:16,g:8,b:12}},
+  {min:100,max:100,name:'전설의 피아니스트',badge:'💎',gradient:'linear-gradient(90deg,#00fff0,#ffd700,#ff6fd8)',bg:{r:12,g:10,b:14}},
 ];
+function xpForLevel(lv){return Math.floor(50*Math.pow(lv,1.5))}
+function getTier(lv){return LEVEL_TIERS.find(t=>lv>=t.min&&lv<=t.max)||LEVEL_TIERS[0]}
+function getParticleCap(){if(playerLevel>=90)return 400;if(playerLevel>=65)return 350;if(playerLevel>=40)return 300;if(playerLevel>=20)return 250;return 200;}
+function getLevelBonus(){return 1+playerLevel*0.005}
+function addXP(amount){
+  if(playerLevel>=100)return;
+  playerXP+=amount;
+  let leveled=false;
+  while(playerLevel<100&&playerXP>=xpForLevel(playerLevel)){
+    playerXP-=xpForLevel(playerLevel);
+    playerLevel++;
+    leveled=true;
+    onLevelUp();
+  }
+  if(playerLevel>=100)playerXP=0;
+  if(typeof updateXPDisplay==='function')updateXPDisplay();
+  if(leveled)saveState();
+}
+// Retroactive level for existing saves
+if(_saved&&!_saved.playerLevel&&totalNotes>0){
+  let xpPool=Math.floor(totalNotes*0.8);
+  playerLevel=1;playerXP=0;
+  while(playerLevel<100&&xpPool>=xpForLevel(playerLevel)){
+    xpPool-=xpForLevel(playerLevel);
+    playerLevel++;
+  }
+  playerXP=Math.min(xpPool,xpForLevel(playerLevel)-1);
+  saveState();
+}
+function updateXPDisplay(){
+  const tier=getTier(playerLevel);
+  const badgeEl=document.getElementById('levelBadge');
+  const numEl=document.getElementById('levelNum');
+  const titleEl=document.getElementById('levelTitle');
+  const fillEl=document.getElementById('xpFill');
+  if(badgeEl)badgeEl.textContent=tier.badge;
+  if(numEl)numEl.textContent='Lv.'+playerLevel;
+  if(titleEl)titleEl.textContent=tier.name;
+  if(fillEl){
+    const pct=playerLevel>=100?100:Math.floor(playerXP/xpForLevel(playerLevel)*100);
+    fillEl.style.width=pct+'%';
+    fillEl.style.background=tier.gradient;
+  }
+}
+function onLevelUp(){
+  const prevKeys=noteData.length;
+  const newNotes=getActiveNotes(playerLevel);
+  const hasNewKeys=newNotes.length>prevKeys;
+  if(hasNewKeys)rebuildPiano(true);
+  applyTierClass();
+  updateXPDisplay();
+  // Level-up toast
+  const tier=getTier(playerLevel);
+  showToast(`${tier.badge} Lv.${playerLevel}! ${tier.name}`,'achievement');
+  // Level-up particles
+  spawnLevelUpParticles();
+  // Level-up sound
+  playLevelUpSound();
+  // Update background base color for tier
+  const bg=tier.bg;
+  bgPulse.target={r:bg.r,g:bg.g,b:bg.b};
+}
+function spawnLevelUpParticles(){
+  const tier=getTier(playerLevel);
+  const tierColors={
+    1:['#3b82f6','#8b5cf6','#60a5fa'],
+    11:['#8b5cf6','#b8a9c9','#a78bfa'],
+    26:['#f59e0b','#f7a072','#fbbf24'],
+    51:['#ffd700','#ffaa00','#fde68a'],
+    76:['#ff6fd8','#ff2200','#f472b6'],
+    100:['#00fff0','#ffd700','#ff6fd8'],
+  };
+  const colors=tierColors[tier.min]||tierColors[1];
+  const cx=window.innerWidth/2,cy=window.innerHeight/2;
+  for(let i=0;i<40;i++){
+    particles.push({x:cx,y:cy,vx:(Math.random()-.5)*12,vy:(Math.random()-.5)*12-3,life:1,decay:.008+Math.random()*.01,size:4+Math.random()*4,color:colors[~~(Math.random()*colors.length)],glow:true,shape:Math.random()>.5?'star':'circle'});
+  }
+}
+function playLevelUpSound(){
+  if(audioCtx.state==='suspended')audioCtx.resume();
+  const notes=[523.25,659.25,783.99]; // C5,E5,G5
+  notes.forEach((freq,i)=>{
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    o.type='sine';o.frequency.value=freq;
+    g.gain.setValueAtTime(0,audioCtx.currentTime+i*0.1);
+    g.gain.linearRampToValueAtTime(.15,audioCtx.currentTime+i*0.1+.05);
+    g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+i*0.1+.8);
+    o.connect(g);g.connect(masterGain);
+    o.start(audioCtx.currentTime+i*0.1);o.stop(audioCtx.currentTime+i*0.1+1);
+    o.onended=()=>{o.disconnect();g.disconnect()};
+  });
+}
+
+// ═══ NOTE DATA (88 keys) ═══
+const KEY_BINDINGS={
+  'C3':'z','C#3':'s','D3':'x','D#3':'d','E3':'c','F3':'v','F#3':'g','G3':'b','G#3':'h','A3':'n','A#3':'j','B3':'m',
+  'C4':'q','C#4':'2','D4':'w','D#4':'3','E4':'e','F4':'r','F#4':'5','G4':'t','G#4':'6','A4':'y','A#4':'7','B4':'u',
+  'C5':'i','C#5':'9','D5':'o','D#5':'0','E5':'p'
+};
+const HAND_MAP={'C3':'left','C#3':'left','D3':'left','D#3':'left','E3':'left','F3':'left','F#3':'left','G3':'left','G#3':'left','A3':'left','A#3':'left','B3':'left'};
+
+function generateAllNotes(){
+  const noteNames=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  const blackSet=new Set(['C#','D#','F#','G#','A#']);
+  const result=[];
+  // A0, B0
+  [{n:'A',o:0,f:27.50},{n:'A#',o:0,f:29.14},{n:'B',o:0,f:30.87}].forEach(x=>{
+    const nn=x.n+x.o;
+    result.push({note:nn,freq:x.f,type:blackSet.has(x.n)?'black':'white',key:KEY_BINDINGS[nn]||null,hand:HAND_MAP[nn]||null});
+  });
+  // C1-B7
+  for(let oct=1;oct<=7;oct++){
+    noteNames.forEach(n=>{
+      const nn=n+oct;
+      const freq=27.5*Math.pow(2,(result.length-0.5)/12); // approximate
+      result.push({note:nn,freq:0,type:blackSet.has(n)?'black':'white',key:KEY_BINDINGS[nn]||null,hand:HAND_MAP[nn]||null});
+    });
+  }
+  // C8
+  result.push({note:'C8',freq:0,type:'white',key:null,hand:null});
+  // Fix frequencies using A4=440Hz standard
+  const a4Idx=result.findIndex(n=>n.note==='A4');
+  result.forEach((n,i)=>{n.freq=440*Math.pow(2,(i-a4Idx)/12)});
+  return result;
+}
+const ALL_NOTES=generateAllNotes();
+
+// Unlock schedule: distance from C4 center
+function assignUnlockLevels(){
+  const c4Idx=ALL_NOTES.findIndex(n=>n.note==='C4');
+  const c5Idx=ALL_NOTES.findIndex(n=>n.note==='C5');
+  // Level 1: white keys C4-C5 only
+  // Level 3: black keys C4-C5
+  // Then expand outward
+  const unlockMap={};
+  ALL_NOTES.forEach((n,i)=>{
+    const nn=n.note;
+    // C4-C5 range
+    if(i>=c4Idx&&i<=c5Idx){
+      unlockMap[nn]=n.type==='black'?3:1;
+    } else {
+      // distance from nearest edge of C4-C5
+      const dist=i<c4Idx?(c4Idx-i):(i-c5Idx);
+      // Map distance to level: roughly every 3 semitones = 5 levels
+      const lv=Math.min(100,Math.max(5,Math.ceil(dist/3)*5+3));
+      unlockMap[nn]=lv;
+    }
+  });
+  // Fine-tune known milestones
+  // Lv5: G3-C5
+  ['G3','G#3','A3','A#3','B3'].forEach(nn=>{unlockMap[nn]=5});
+  // Lv10: C3-E5 (original range)
+  ['C3','C#3','D3','D#3','E3','F3','F#3'].forEach(nn=>{unlockMap[nn]=10});
+  ['C#5','D5','D#5','E5'].forEach(nn=>{if(unlockMap[nn]>10)unlockMap[nn]=10});
+  return unlockMap;
+}
+const UNLOCK_MAP=assignUnlockLevels();
+ALL_NOTES.forEach(n=>{n.unlockLevel=UNLOCK_MAP[n.note]||100});
+
+function getActiveNotes(lv){return ALL_NOTES.filter(n=>n.unlockLevel<=lv)}
+let noteData=getActiveNotes(playerLevel);
+
+// Song data migration: index → note name
+function migrateToNoteNames(songIndices){
+  // Original noteData was C3-E5 (29 notes)
+  const origNotes=['C3','C#3','D3','D#3','E3','F3','F#3','G3','G#3','A3','A#3','B3','C4','C#4','D4','D#4','E4','F4','F#4','G4','G#4','A4','A#4','B4','C5','C#5','D5','D#5','E5'];
+  return songIndices.map(i=>origNotes[i]);
+}
+function noteNameToIndex(name){return noteData.findIndex(n=>n.note===name)}
 
 // ═══ AUDIO ═══
 let currentMode=equipped.mode||'dreamy',sustainOn=false;
@@ -550,7 +747,7 @@ function playNote(ni,idx){
   const s=modeSettings[currentMode];
   const rb=Math.min(rageLevel/25,1);
   const pan=audioCtx.createStereoPanner();
-  pan.pan.value=(idx/noteData.length)*1.6-.8;
+  pan.pan.value=(idx/Math.max(noteData.length,1))*1.6-.8;
   const dt=sustainOn?s.decay*2.5:s.decay;
   const harmonics=tonePresets[equipped.tone](ni.freq);
   harmonics.forEach(h=>{
@@ -597,32 +794,125 @@ function addNotes(n){
 function formatNum(n){return n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':Math.floor(n).toString()}
 
 // ═══ BUILD PIANO ═══
-const piano=document.getElementById('piano'),pianoKeyEls={};
-noteData.forEach((n,i)=>{if(n.type==='white'){const el=document.createElement('div');el.className=`white-key ${n.hand==='left'?'left-zone':'right-zone'}`;el.dataset.index=i;el.innerHTML=`<span class="label"><span class="key-char">${n.key.toUpperCase()}</span><span class="note-name">${n.note}</span></span>`;piano.appendChild(el);pianoKeyEls[i]=el;el.addEventListener('pointerdown',e=>{e.preventDefault();triggerKey(i)});el.addEventListener('pointerenter',e=>{if(e.buttons)triggerKey(i)});el.addEventListener('pointerup',()=>releaseKey(i));el.addEventListener('pointerleave',()=>releaseKey(i))}});
-const whiteKeyEls=piano.querySelectorAll('.white-key');
-const blackKeyData=[];
-noteData.forEach((n,i)=>{if(n.type==='black'){const el=document.createElement('div');el.className='black-key';el.dataset.index=i;el.innerHTML=`<span class="label">${n.key.toUpperCase()}</span>`;const pw=noteData.slice(0,i).filter(x=>x.type==='white').length;blackKeyData.push({el,prevWhiteIdx:pw-1});el.style.top='0px';piano.appendChild(el);pianoKeyEls[i]=el;el.addEventListener('pointerdown',e=>{e.preventDefault();triggerKey(i)});el.addEventListener('pointerenter',e=>{if(e.buttons)triggerKey(i)});el.addEventListener('pointerup',()=>releaseKey(i));el.addEventListener('pointerleave',()=>releaseKey(i))}});
-function repositionBlackKeys(){blackKeyData.forEach(({el,prevWhiteIdx})=>{const wk=whiteKeyEls[prevWhiteIdx];if(wk)el.style.left=(wk.offsetLeft+wk.offsetWidth-17)+'px'});}
-repositionBlackKeys();
+const piano=document.getElementById('piano');
+let pianoKeyEls={};
+let whiteKeyEls,blackKeyData=[];
+
+function rebuildPiano(newKeysAnimate){
+  const prevNoteCount=Object.keys(pianoKeyEls).length;
+  noteData=getActiveNotes(playerLevel);
+  const skinClass='keys-container skin-'+(equipped.skin||'ivory');
+  // Save cat el ref
+  const catEl=document.getElementById('pixelCat');
+  // Clear
+  piano.innerHTML='';
+  piano.className=skinClass;
+  pianoKeyEls={};
+  blackKeyData=[];
+  // Adaptive key width
+  const wCount=noteData.filter(n=>n.type==='white').length;
+  const idealW=Math.floor(window.innerWidth/wCount);
+  const kw=Math.max(24,Math.min(52,idealW));
+  const bkw=Math.round(kw*0.615);
+  piano.style.setProperty('--dyn-key-w',kw+'px');
+  piano.style.setProperty('--dyn-bkey-w',bkw+'px');
+  // White keys
+  noteData.forEach((n,i)=>{
+    if(n.type==='white'){
+      const el=document.createElement('div');
+      el.className=`white-key ${n.hand==='left'?'left-zone':'right-zone'}`;
+      el.dataset.index=i;
+      const kChar=n.key?n.key.toUpperCase():'';
+      el.innerHTML=`<span class="label"><span class="key-char">${kChar}</span><span class="note-name">${n.note}</span></span>`;
+      if(kw<52)el.style.width=kw+'px';
+      if(newKeysAnimate&&prevNoteCount>0&&n.unlockLevel===playerLevel)el.classList.add('key-new');
+      piano.appendChild(el);pianoKeyEls[i]=el;
+      el.addEventListener('pointerdown',e=>{e.preventDefault();triggerKey(i)});
+      el.addEventListener('pointerenter',e=>{if(e.buttons)triggerKey(i)});
+      el.addEventListener('pointerup',()=>releaseKey(i));
+      el.addEventListener('pointerleave',()=>releaseKey(i));
+    }
+  });
+  whiteKeyEls=piano.querySelectorAll('.white-key');
+  // Black keys
+  noteData.forEach((n,i)=>{
+    if(n.type==='black'){
+      const el=document.createElement('div');el.className='black-key';el.dataset.index=i;
+      const kChar=n.key?n.key.toUpperCase():'';
+      el.innerHTML=`<span class="label">${kChar}</span>`;
+      const pw=noteData.slice(0,i).filter(x=>x.type==='white').length;
+      blackKeyData.push({el,prevWhiteIdx:pw-1});
+      el.style.top='0px';
+      if(bkw<32)el.style.width=bkw+'px';
+      if(newKeysAnimate&&prevNoteCount>0&&n.unlockLevel===playerLevel)el.classList.add('key-new');
+      piano.appendChild(el);pianoKeyEls[i]=el;
+      el.addEventListener('pointerdown',e=>{e.preventDefault();triggerKey(i)});
+      el.addEventListener('pointerenter',e=>{if(e.buttons)triggerKey(i)});
+      el.addEventListener('pointerup',()=>releaseKey(i));
+      el.addEventListener('pointerleave',()=>releaseKey(i));
+    }
+  });
+  repositionBlackKeys();
+  // Re-add cat
+  if(catEl)piano.appendChild(catEl);
+  // Rebuild keyMap
+  Object.keys(keyMap).forEach(k=>delete keyMap[k]);
+  noteData.forEach((n,i)=>{if(n.key)keyMap[n.key.toLowerCase()]=i});
+  // Rebuild _whiteKeyIndices
+  _whiteKeyIndices.length=0;
+  noteData.forEach((n,i)=>{if(n.type==='white')_whiteKeyIndices.push(i)});
+  // Apply tier class
+  applyTierClass();
+  // Scroll to C4
+  centerPianoScroll();
+  // Remove animation class after delay
+  if(newKeysAnimate)setTimeout(()=>{piano.querySelectorAll('.key-new').forEach(el=>el.classList.remove('key-new'))},2000);
+}
+function repositionBlackKeys(){blackKeyData.forEach(({el,prevWhiteIdx})=>{const wk=whiteKeyEls[prevWhiteIdx];if(wk)el.style.left=(wk.offsetLeft+wk.offsetWidth-Math.round(parseFloat(getComputedStyle(el).width)/2))+'px'});}
+function centerPianoScroll(){
+  const keybed=document.querySelector('.piano-keybed');
+  const c4Idx=noteData.findIndex(n=>n.note==='C4');
+  const c4El=pianoKeyEls[c4Idx];
+  if(keybed&&c4El)keybed.scrollLeft=c4El.offsetLeft-keybed.offsetWidth/2+c4El.offsetWidth/2;
+}
+function applyTierClass(){
+  const stage=document.querySelector('.piano-stage');
+  if(!stage)return;
+  stage.className='piano-stage';
+  if(playerLevel>=100)stage.classList.add('tier-legendary');
+  else if(playerLevel>=76)stage.classList.add('tier-grandmaster');
+  else if(playerLevel>=51)stage.classList.add('tier-virtuoso');
+  else if(playerLevel>=26)stage.classList.add('tier-performer');
+  else if(playerLevel>=11)stage.classList.add('tier-apprentice');
+}
 // 픽셀 고양이 DOM
 const pixelCatEl=document.createElement('div');pixelCatEl.className='pixel-cat';pixelCatEl.id='pixelCat';pixelCatEl.style.display='none';
 const catSpriteEl=document.createElement('div');catSpriteEl.className='cat-sprite idle';pixelCatEl.appendChild(catSpriteEl);piano.appendChild(pixelCatEl);
+// keyMap and _whiteKeyIndices (mutable)
+const keyMap={};
+const _whiteKeyIndices=[];
+// Initial build
+rebuildPiano(false);
 // 저장된 스킨 복원
 if(_saved)applySkin();
 // 저장된 통화 표시
 updateCurrencyDisplay();
+// 레벨 HUD 초기화
+updateXPDisplay();
+applyTierClass();
 
-function triggerKey(idx){
+function triggerKey(idx,isAuto){
   playNote(noteData[idx],idx);
   pianoKeyEls[idx]?.classList.add('active');
   registerHit();
   stats.keys++;
-  addNotes(getMultiplier());
+  const mult=getMultiplier();
+  addNotes(mult*getLevelBonus());
+  addXP(isAuto?Math.ceil(mult*0.2):mult);
   spawnParticles(idx);pulseBackground();
 }
 function releaseKey(idx){pianoKeyEls[idx]?.classList.remove('active')}
 
-const keyMap={};noteData.forEach((n,i)=>{keyMap[n.key.toLowerCase()]=i});
 const activeKeysSet=new Set();
 document.addEventListener('keydown',e=>{if(e.repeat)return;if(e.code==='Space'){e.preventDefault();sustainOn=true;document.getElementById('sustainIndicator').classList.add('on');return}const k=e.key.toLowerCase();if(keyMap[k]!==undefined&&!activeKeysSet.has(k)){e.preventDefault();activeKeysSet.add(k);triggerKey(keyMap[k])}});
 document.addEventListener('keyup',e=>{if(e.code==='Space'){sustainOn=false;document.getElementById('sustainIndicator').classList.remove('on');return}const k=e.key.toLowerCase();if(keyMap[k]!==undefined){activeKeysSet.delete(k);releaseKey(keyMap[k])}});
@@ -642,7 +932,7 @@ const particleThemes={
 };
 
 function spawnParticles(idx){
-  if(particles.length>200)return; // perf cap
+  if(particles.length>getParticleCap())return; // perf cap
   const el=pianoKeyEls[idx];if(!el)return;
   const r=el.getBoundingClientRect();const cx=r.left+r.width/2,cy=r.top;
   const rb=Math.min(rageLevel/15,1);
@@ -753,7 +1043,8 @@ function renderShop(){
       const isEquipped=cat.equippedKey?equipped[cat.equippedKey]===item.id:owned[cat.ownedKey].includes(item.id);
       // prereq 체크 (자동연주기 / 곡)
       const prereqMet=!item.prereq||owned[cat.ownedKey].includes(item.prereq)||owned.autoTappers.includes(item.prereq);
-      const canBuy=!isOwned&&notes>=item.cost&&prereqMet;
+      const levelMet=!item.reqLevel||playerLevel>=item.reqLevel;
+      const canBuy=!isOwned&&notes>=item.cost&&prereqMet&&levelMet;
 
       const el=document.createElement('div');
       el.className=`shop-item ${isEquipped?'equipped':isOwned?'owned':''}`;
@@ -763,10 +1054,12 @@ function renderShop(){
       else if(isEquipped&&cat.equippedKey) btnHtml=`<button class="buy-btn equipped-btn">✓</button>`;
       else if(isOwned&&cat.equippedKey) btnHtml=`<button class="buy-btn equip-btn" data-cat="${cat.key}" data-id="${item.id}">${cat.key==='cats'?'OFF':'equip'}</button>`;
       else if(isOwned) btnHtml=`<button class="buy-btn equipped-btn">✓</button>`;
+      else if(!levelMet) btnHtml=`<button class="buy-btn cant-buy" style="font-size:.55rem">Lv.${item.reqLevel}</button>`;
       else if(!prereqMet) btnHtml=`<button class="buy-btn cant-buy">🔒</button>`;
       else btnHtml=`<button class="buy-btn ${canBuy?'can-buy':'cant-buy'}" data-cat="${cat.key}" data-id="${item.id}" data-cost="${item.cost}">♪${item.cost}</button>`;
 
-      el.innerHTML=`<div class="item-icon">${item.icon}</div><div class="item-info"><div class="item-name">${item.name}</div><div class="item-desc">${item.desc}</div></div><div class="item-action">${btnHtml}</div>`;
+      const lvTag=item.reqLevel&&!isOwned?` <span style="color:${levelMet?'#4ade80':'#ef4444'};font-size:.45rem">Lv.${item.reqLevel}</span>`:'';
+      el.innerHTML=`<div class="item-icon">${item.icon}</div><div class="item-info"><div class="item-name">${item.name}</div><div class="item-desc">${item.desc}${lvTag}</div></div><div class="item-action">${btnHtml}</div>`;
       catEl.appendChild(el);
     });
     // 자동연주 ON/OFF 토글
@@ -867,6 +1160,9 @@ function setMode(m){
 }
 
 document.querySelector('.keys-container').addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
+document.addEventListener('gesturestart',e=>e.preventDefault());
+document.addEventListener('gesturechange',e=>e.preventDefault());
+document.addEventListener('contextmenu',e=>e.preventDefault());
 
 // ═══ AUTO TAPPER ═══
 let autoTapInterval=null,songPosition=0;
@@ -878,9 +1174,13 @@ function updateAutoTap(){
   autoTapInterval=setInterval(()=>{
     const songNotes=SONGS[equipped.song];
     let idx;
-    if(songNotes){idx=songNotes[songPosition%songNotes.length];songPosition++;}
-    else{idx=Math.floor(Math.random()*noteData.length);}
-    triggerKey(idx);
+    if(songNotes){
+      const name=songNotes[songPosition%songNotes.length];
+      idx=noteNameToIndex(name);
+      songPosition++;
+      if(idx<0)idx=Math.floor(Math.random()*noteData.length);
+    } else{idx=Math.floor(Math.random()*noteData.length);}
+    triggerKey(idx,true);
   },Math.round(1000/maxRate));
   updateSongIndicator();
 }
@@ -894,7 +1194,6 @@ function updateSongIndicator(){
 }
 
 // ═══ PIXEL CAT ═══
-const _whiteKeyIndices=noteData.map((n,i)=>n.type==='white'?i:-1).filter(i=>i>=0);
 let catState={active:false,visiting:false,currentKeyIdx:0,timer:null,walkFrame:1,walkAnimTimer:null,direction:1,notesPlayed:0,cycleTimer:null};
 const CAT_VISIT_NOTES=3+Math.floor(Math.random()*4); // 3~6 notes per visit
 const CAT_CYCLE_MS=5*60*1000; // 5 minutes
@@ -976,7 +1275,7 @@ function initOfflineEarnings(){
   if(secs<60)return;
   const autoRates={auto_lv1:1,auto_lv2:3,auto_lv3:8};
   const autoRate=owned.autoTappers.reduce((m,id)=>Math.max(m,autoRates[id]||0),0);
-  const earned=Math.floor(secs*(0.5+autoRate));
+  const earned=Math.floor(secs*(0.5+autoRate)*getLevelBonus());
   notes+=earned;totalNotes+=earned;updateCurrencyDisplay();saveState();
   const mins=Math.floor(secs/60),hrs=Math.floor(mins/60);
   document.getElementById('offlineTime').textContent=
