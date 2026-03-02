@@ -456,8 +456,12 @@ let stats=_saved?.stats??{fury:0,keys:0};
 if(!owned.achievements) owned.achievements=[];
 if(!owned.autoTappers)  owned.autoTappers=[];
 if(!owned.cats)         owned.cats=[];
+if(equipped.cat===undefined) equipped.cat=owned.cats.includes('pixel_cat')?'pixel_cat':null;
+if(equipped.cat===true) equipped.cat='pixel_cat';
+if(equipped.cat===false) equipped.cat=null;
 if(!owned.songs)        owned.songs=['random'];
 if(!equipped.song)      equipped.song='random';
+if(equipped.autoTapOn===undefined) equipped.autoTapOn=true;
 function saveState(){localStorage.setItem('sp_save',JSON.stringify({notes,totalNotes,equipped,owned,stats,lastOnline:Date.now()}))}
 
 // ═══ ACHIEVEMENTS ═══
@@ -904,7 +908,7 @@ function renderShop(){
     {key:'skins',title:'🎹',items:shopItems.skins,ownedKey:'skins',equippedKey:'skin'},
     {key:'ambients',title:'🌧️',items:shopItems.ambients,ownedKey:'ambients',equippedKey:null},
     {key:'autoTappers',title:'🤖',items:shopItems.autoTappers,ownedKey:'autoTappers',equippedKey:null},
-    {key:'cats',title:'🐱',items:shopItems.cats,ownedKey:'cats',equippedKey:null},
+    {key:'cats',title:'🐱',items:shopItems.cats,ownedKey:'cats',equippedKey:'cat'},
     {key:'songs',title:'🎶',items:shopItems.songs,ownedKey:'songs',equippedKey:'song'},
   ];
 
@@ -923,8 +927,9 @@ function renderShop(){
       el.className=`shop-item ${isEquipped?'equipped':isOwned?'owned':''}`;
 
       let btnHtml='';
-      if(isEquipped&&cat.equippedKey) btnHtml=`<button class="buy-btn equipped-btn">✓</button>`;
-      else if(isOwned&&cat.equippedKey) btnHtml=`<button class="buy-btn equip-btn" data-cat="${cat.key}" data-id="${item.id}">equip</button>`;
+      if(isEquipped&&cat.equippedKey&&cat.key==='cats') btnHtml=`<button class="buy-btn equip-btn equipped-btn" data-cat="${cat.key}" data-id="${item.id}">ON</button>`;
+      else if(isEquipped&&cat.equippedKey) btnHtml=`<button class="buy-btn equipped-btn">✓</button>`;
+      else if(isOwned&&cat.equippedKey) btnHtml=`<button class="buy-btn equip-btn" data-cat="${cat.key}" data-id="${item.id}">${cat.key==='cats'?'OFF':'equip'}</button>`;
       else if(isOwned) btnHtml=`<button class="buy-btn equipped-btn">✓</button>`;
       else if(!prereqMet) btnHtml=`<button class="buy-btn cant-buy">🔒</button>`;
       else btnHtml=`<button class="buy-btn ${canBuy?'can-buy':'cant-buy'}" data-cat="${cat.key}" data-id="${item.id}" data-cost="${item.cost}">♪${item.cost}</button>`;
@@ -932,6 +937,13 @@ function renderShop(){
       el.innerHTML=`<div class="item-icon">${item.icon}</div><div class="item-info"><div class="item-name">${item.name}</div><div class="item-desc">${item.desc}</div></div><div class="item-action">${btnHtml}</div>`;
       catEl.appendChild(el);
     });
+    // 자동연주 ON/OFF 토글
+    if(cat.key==='autoTappers'&&owned.autoTappers.length>0){
+      const toggleEl=document.createElement('div');
+      toggleEl.className=`shop-item ${equipped.autoTapOn?'equipped':'owned'}`;
+      toggleEl.innerHTML=`<div class="item-icon">⏯️</div><div class="item-info"><div class="item-name">자동 연주</div><div class="item-desc">${equipped.autoTapOn?'자동 연주 중':'일시 정지'}</div></div><div class="item-action"><button class="buy-btn equip-btn ${equipped.autoTapOn?'equipped-btn':''}" id="autoTapToggle">${equipped.autoTapOn?'ON':'OFF'}</button></div>`;
+      catEl.appendChild(toggleEl);
+    }
     scroll.appendChild(catEl);
   });
 
@@ -960,6 +972,12 @@ function renderShop(){
   scroll.querySelectorAll('.equip-btn').forEach(btn=>{
     btn.addEventListener('click',()=>equipItem(btn.dataset.cat,btn.dataset.id));
   });
+  const atToggle=document.getElementById('autoTapToggle');
+  if(atToggle)atToggle.addEventListener('click',()=>{
+    equipped.autoTapOn=!equipped.autoTapOn;
+    updateAutoTap();saveState();renderShop();
+    showToast(`⏯️ 자동 연주 ${equipped.autoTapOn?'ON':'OFF'}!`,equipped.autoTapOn?'equip':'unlock');
+  });
 }
 
 function buyItem(cat,id,cost){
@@ -969,7 +987,7 @@ function buyItem(cat,id,cost){
   else if(cat==='skins')owned.skins.push(id);
   else if(cat==='ambients')owned.ambients.push(id);
   else if(cat==='autoTappers'){owned.autoTappers.push(id);updateAutoTap();checkAchievements();}
-  else if(cat==='cats'){owned.cats.push(id);updatePixelCat();}
+  else if(cat==='cats'){owned.cats.push(id);}
   else if(cat==='songs'){owned.songs.push(id);}
 
   // Auto equip
@@ -977,6 +995,7 @@ function buyItem(cat,id,cost){
   else if(cat==='particles')equipped.particles=id;
   else if(cat==='skins'){equipped.skin=id;applySkin()}
   else if(cat==='ambients'){equipped.ambient=owned.ambients;switchAmb(id);renderAmbientOptions()}
+  else if(cat==='cats'){equipped.cat=id;updatePixelCat();}
   else if(cat==='songs'){equipped.song=id;songPosition=0;updateAutoTap();}
 
   showToast(`${shopItems[cat].find(x=>x.id===id).icon} ${shopItems[cat].find(x=>x.id===id).name} unlocked!`,'unlock');
@@ -988,8 +1007,11 @@ function equipItem(cat,id){
   else if(cat==='tones')equipped.tone=id;
   else if(cat==='particles')equipped.particles=id;
   else if(cat==='skins'){equipped.skin=id;applySkin()}
+  else if(cat==='cats'){equipped.cat=equipped.cat===id?null:id;updatePixelCat();}
   else if(cat==='songs'){equipped.song=id;songPosition=0;updateAutoTap();}
-  showToast(`${shopItems[cat].find(x=>x.id===id).icon} ${shopItems[cat].find(x=>x.id===id).name} equipped!`,'equip');
+  const _item=shopItems[cat].find(x=>x.id===id);
+  const _isOn=cat==='cats'?equipped.cat===id:true;
+  showToast(`${_item.icon} ${_item.name} ${_isOn?'ON':'OFF'}!`,_isOn?'equip':'unlock');
   saveState();
   renderShop();
 }
@@ -1022,7 +1044,7 @@ function updateAutoTap(){
   clearInterval(autoTapInterval);autoTapInterval=null;songPosition=0;
   const rates={auto_lv1:1,auto_lv2:3,auto_lv3:8};
   const maxRate=owned.autoTappers.reduce((m,id)=>Math.max(m,rates[id]||0),0);
-  if(!maxRate)return;
+  if(!maxRate||!equipped.autoTapOn){updateSongIndicator();return;}
   autoTapInterval=setInterval(()=>{
     const songNotes=SONGS[equipped.song];
     let idx;
@@ -1037,24 +1059,36 @@ function updateSongIndicator(){
   if(!el)return;
   const rates={auto_lv1:1,auto_lv2:3,auto_lv3:8};
   const maxRate=owned.autoTappers.reduce((m,id)=>Math.max(m,rates[id]||0),0);
-  if(maxRate>0){const def=shopItems.songs.find(s=>s.id===equipped.song);nameEl.textContent=def?def.name:'랜덤';el.style.display='';}
+  if(maxRate>0&&equipped.autoTapOn){const def=shopItems.songs.find(s=>s.id===equipped.song);nameEl.textContent=def?def.name:'랜덤';el.style.display='';}
   else{el.style.display='none';}
 }
 
 // ═══ PIXEL CAT ═══
 const _whiteKeyIndices=noteData.map((n,i)=>n.type==='white'?i:-1).filter(i=>i>=0);
-let catState={active:false,currentKeyIdx:0,timer:null,walkFrame:1,walkAnimTimer:null,direction:1};
+let catState={active:false,visiting:false,currentKeyIdx:0,timer:null,walkFrame:1,walkAnimTimer:null,direction:1,notesPlayed:0,cycleTimer:null};
+const CAT_VISIT_NOTES=3+Math.floor(Math.random()*4); // 3~6 notes per visit
+const CAT_CYCLE_MS=5*60*1000; // 5 minutes
 
-function startPixelCat(){
-  if(catState.active)return;
-  catState.active=true;
+function startCatCycle(){
+  stopCatCycle();
+  if(!owned.cats.includes('pixel_cat')||!equipped.cat)return;
+  catVisit();
+  catState.cycleTimer=setInterval(catVisit,CAT_CYCLE_MS);
+}
+function stopCatCycle(){
+  clearInterval(catState.cycleTimer);catState.cycleTimer=null;
+  catEndVisit();
+}
+function catVisit(){
+  if(catState.visiting||!equipped.cat)return;
+  catState.visiting=true;catState.active=true;catState.notesPlayed=0;
   pixelCatEl.style.display='block';
   catState.currentKeyIdx=_whiteKeyIndices[Math.floor(Math.random()*_whiteKeyIndices.length)];
   positionCatOnKey(catState.currentKeyIdx);
   catScheduleNext();
 }
-function stopPixelCat(){
-  catState.active=false;
+function catEndVisit(){
+  catState.active=false;catState.visiting=false;
   clearTimeout(catState.timer);clearInterval(catState.walkAnimTimer);
   pixelCatEl.style.display='none';
 }
@@ -1072,7 +1106,6 @@ function catPickTarget(){
   catState.direction=newWPos>curWPos?1:-1;
   if(catState.direction===-1)pixelCatEl.classList.add('face-left');
   else pixelCatEl.classList.remove('face-left');
-  // walk animation frames
   catState.walkAnimTimer=setInterval(()=>{
     catState.walkFrame=catState.walkFrame===1?2:1;
     catSpriteEl.className='cat-sprite walk-'+catState.walkFrame;
@@ -1083,12 +1116,13 @@ function catPickTarget(){
     catState.currentKeyIdx=targetIdx;
     triggerKey(targetIdx);
     setTimeout(()=>releaseKey(targetIdx),150);
-    // occasionally press nearby black key
     if(Math.random()>.6){
       const bk=catFindNearbyBlack(targetIdx);
       if(bk!==null){triggerKey(bk);setTimeout(()=>releaseKey(bk),120);}
     }
-    catScheduleNext();
+    catState.notesPlayed++;
+    if(catState.notesPlayed>=CAT_VISIT_NOTES){catEndVisit();}
+    else{catScheduleNext();}
   },620);
 }
 function positionCatOnKey(idx){
@@ -1100,8 +1134,8 @@ function catFindNearbyBlack(wIdx){
   return null;
 }
 function updatePixelCat(){
-  if(owned.cats.includes('pixel_cat'))startPixelCat();
-  else stopPixelCat();
+  if(owned.cats.includes('pixel_cat')&&equipped.cat)startCatCycle();
+  else stopCatCycle();
 }
 
 // ═══ OFFLINE EARNINGS ═══
