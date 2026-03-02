@@ -827,8 +827,7 @@ function rebuildPiano(newKeysAnimate){
       if(kw<52)el.style.width=kw+'px';
       if(newKeysAnimate&&prevNoteCount>0&&n.unlockLevel===playerLevel)el.classList.add('key-new');
       piano.appendChild(el);pianoKeyEls[i]=el;
-      el.addEventListener('pointerdown',e=>{e.preventDefault();triggerKey(i)});
-      el.addEventListener('pointerenter',e=>{if(e.buttons)triggerKey(i)});
+      el.addEventListener('pointerdown',e=>{e.preventDefault();el.releasePointerCapture(e.pointerId);triggerKey(i)});
       el.addEventListener('pointerup',()=>releaseKey(i));
       el.addEventListener('pointerleave',()=>releaseKey(i));
     }
@@ -846,8 +845,7 @@ function rebuildPiano(newKeysAnimate){
       if(bkw<32)el.style.width=bkw+'px';
       if(newKeysAnimate&&prevNoteCount>0&&n.unlockLevel===playerLevel)el.classList.add('key-new');
       piano.appendChild(el);pianoKeyEls[i]=el;
-      el.addEventListener('pointerdown',e=>{e.preventDefault();triggerKey(i)});
-      el.addEventListener('pointerenter',e=>{if(e.buttons)triggerKey(i)});
+      el.addEventListener('pointerdown',e=>{e.preventDefault();el.releasePointerCapture(e.pointerId);triggerKey(i)});
       el.addEventListener('pointerup',()=>releaseKey(i));
       el.addEventListener('pointerleave',()=>releaseKey(i));
     }
@@ -912,6 +910,29 @@ function triggerKey(idx,isAuto){
   spawnParticles(idx);pulseBackground();
 }
 function releaseKey(idx){pianoKeyEls[idx]?.classList.remove('active')}
+
+// ── Glissando (drag across keys) ──
+let _glissDrag=false,_glissLastIdx=null;
+piano.addEventListener('pointerdown',e=>{
+  _glissDrag=true;
+  const keyEl=e.target.closest('[data-index]');
+  _glissLastIdx=keyEl?parseInt(keyEl.dataset.index):null;
+});
+piano.addEventListener('pointermove',e=>{
+  if(!_glissDrag)return;
+  const el=document.elementFromPoint(e.clientX,e.clientY);
+  if(!el)return;
+  const keyEl=el.closest('[data-index]');
+  if(!keyEl)return;
+  const idx=parseInt(keyEl.dataset.index);
+  if(idx!==_glissLastIdx){
+    if(_glissLastIdx!==null)releaseKey(_glissLastIdx);
+    triggerKey(idx);
+    _glissLastIdx=idx;
+  }
+});
+document.addEventListener('pointerup',()=>{if(_glissDrag&&_glissLastIdx!==null)releaseKey(_glissLastIdx);_glissDrag=false;_glissLastIdx=null;});
+document.addEventListener('pointercancel',()=>{if(_glissDrag&&_glissLastIdx!==null)releaseKey(_glissLastIdx);_glissDrag=false;_glissLastIdx=null;});
 
 const activeKeysSet=new Set();
 document.addEventListener('keydown',e=>{if(e.repeat)return;if(e.code==='Space'){e.preventDefault();sustainOn=true;document.getElementById('sustainIndicator').classList.add('on');return}const k=e.key.toLowerCase();if(keyMap[k]!==undefined&&!activeKeysSet.has(k)){e.preventDefault();activeKeysSet.add(k);triggerKey(keyMap[k])}});
