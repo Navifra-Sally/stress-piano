@@ -74,6 +74,7 @@
 
   .multiplier{font-size:.5rem;color:rgba(255,255,255,.25);font-weight:300;letter-spacing:1px;padding:2px 8px;border-radius:8px;background:rgba(255,255,255,.03)}
   .multiplier.boosted{color:#f59e0b;background:rgba(255,180,0,.08)}
+  .song-indicator{font-size:.5rem;color:rgba(255,255,255,.3);font-weight:300;letter-spacing:1px;padding:2px 8px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05)}
 
   /* ─── Shop Button ─── */
   .shop-btn{padding:5px 14px;border-radius:14px;background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.15);color:rgba(255,215,0,.6);font-size:.65rem;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .2s;letter-spacing:1px}
@@ -381,6 +382,7 @@
   </div>
   <div class="currency" id="currencyDisplay"><span class="note-icon">♪</span><span id="currencyAmount">0</span></div>
   <div class="multiplier" id="multiplierDisplay">×1</div>
+  <div class="song-indicator" id="songIndicator" style="display:none">🎶 <span id="songName"></span></div>
   <div class="rage-section">
     <span class="rage-label" id="rageLabel">&nbsp;</span>
     <div class="rage-meter"><div class="rage-meter-fill" id="rageFill"></div></div>
@@ -454,6 +456,8 @@ let stats=_saved?.stats??{fury:0,keys:0};
 if(!owned.achievements) owned.achievements=[];
 if(!owned.autoTappers)  owned.autoTappers=[];
 if(!owned.cats)         owned.cats=[];
+if(!owned.songs)        owned.songs=['random'];
+if(!equipped.song)      equipped.song='random';
 function saveState(){localStorage.setItem('sp_save',JSON.stringify({notes,totalNotes,equipped,owned,stats,lastOnline:Date.now()}))}
 
 // ═══ ACHIEVEMENTS ═══
@@ -520,6 +524,25 @@ const shopItems={
   cats:[
     {id:'pixel_cat',name:'피아노 고양이',desc:'고양이가 건반을 밟아요',icon:'🐱',cost:5000},
   ],
+  songs:[
+    {id:'random',     name:'랜덤',              desc:'무작위 자동 연주',       icon:'🎲', cost:0,     prereq:'auto_lv1'},
+    {id:'twinkle',    name:'반짝반짝 작은별',     desc:'클래식 동요',           icon:'⭐', cost:500,   prereq:'auto_lv1'},
+    {id:'birthday',   name:'생일 축하합니다',     desc:'모두가 아는 그 노래',    icon:'🎂', cost:500,   prereq:'auto_lv1'},
+    {id:'ode_to_joy', name:'환희의 송가',        desc:'베토벤',               icon:'🎵', cost:1000,  prereq:'auto_lv1'},
+    {id:'fur_elise',  name:'엘리제를 위하여',     desc:'베토벤',               icon:'🎻', cost:3000,  prereq:'auto_lv2'},
+    {id:'canon',      name:'캐논 변주곡',        desc:'파헬벨',               icon:'🎼', cost:5000,  prereq:'auto_lv2'},
+    {id:'turkish',    name:'터키 행진곡',        desc:'모차르트',              icon:'🏛️', cost:15000, prereq:'auto_lv3'},
+  ],
+};
+
+const SONGS={
+  random:null,
+  twinkle:[12,12,19,19,21,21,19, 17,17,16,16,14,14,12, 19,19,17,17,16,16,14, 19,19,17,17,16,16,14, 12,12,19,19,21,21,19, 17,17,16,16,14,14,12],
+  birthday:[12,12,14,12,17,16, 12,12,14,12,19,17, 12,12,24,21,17,16,14, 22,22,21,17,19,17],
+  ode_to_joy:[16,16,17,19,19,17,16,14, 12,12,14,16,16,14,14, 16,16,17,19,19,17,16,14, 12,12,14,16,14,12,12],
+  fur_elise:[16,15,16,15,16,11,14,12,9, 0,4,9,11, 12,16,15,16,15,16,11,14,12,9, 0,4,9,11,12],
+  canon:[16,14,12,11,9,7,9,11, 12,11,12,14,16,14,12,11, 9,7,9,11,12,14,16,19, 17,16,14,12,14,12,11,9],
+  turkish:[11,21,20,21, 12,21,20,21, 12,24,23,24,26,24, 23,21,23,21,19,21, 19,17,16,17,19,17, 16,14,12,14,16],
 };
 
 // ═══ NOTE DATA ═══
@@ -882,6 +905,7 @@ function renderShop(){
     {key:'ambients',title:'🌧️',items:shopItems.ambients,ownedKey:'ambients',equippedKey:null},
     {key:'autoTappers',title:'🤖',items:shopItems.autoTappers,ownedKey:'autoTappers',equippedKey:null},
     {key:'cats',title:'🐱',items:shopItems.cats,ownedKey:'cats',equippedKey:null},
+    {key:'songs',title:'🎶',items:shopItems.songs,ownedKey:'songs',equippedKey:'song'},
   ];
 
   cats.forEach(cat=>{
@@ -891,8 +915,8 @@ function renderShop(){
     cat.items.forEach(item=>{
       const isOwned=owned[cat.ownedKey].includes(item.id);
       const isEquipped=cat.equippedKey?equipped[cat.equippedKey]===item.id:owned[cat.ownedKey].includes(item.id);
-      // prereq 체크 (자동연주기)
-      const prereqMet=!item.prereq||owned[cat.ownedKey].includes(item.prereq);
+      // prereq 체크 (자동연주기 / 곡)
+      const prereqMet=!item.prereq||owned[cat.ownedKey].includes(item.prereq)||owned.autoTappers.includes(item.prereq);
       const canBuy=!isOwned&&notes>=item.cost&&prereqMet;
 
       const el=document.createElement('div');
@@ -946,12 +970,14 @@ function buyItem(cat,id,cost){
   else if(cat==='ambients')owned.ambients.push(id);
   else if(cat==='autoTappers'){owned.autoTappers.push(id);updateAutoTap();checkAchievements();}
   else if(cat==='cats'){owned.cats.push(id);updatePixelCat();}
+  else if(cat==='songs'){owned.songs.push(id);}
 
   // Auto equip
   if(cat==='tones')equipped.tone=id;
   else if(cat==='particles')equipped.particles=id;
   else if(cat==='skins'){equipped.skin=id;applySkin()}
   else if(cat==='ambients'){equipped.ambient=owned.ambients;switchAmb(id);renderAmbientOptions()}
+  else if(cat==='songs'){equipped.song=id;songPosition=0;updateAutoTap();}
 
   showToast(`${shopItems[cat].find(x=>x.id===id).icon} ${shopItems[cat].find(x=>x.id===id).name} unlocked!`,'unlock');
   saveState();renderShop();updateCurrencyDisplay();
@@ -962,6 +988,7 @@ function equipItem(cat,id){
   else if(cat==='tones')equipped.tone=id;
   else if(cat==='particles')equipped.particles=id;
   else if(cat==='skins'){equipped.skin=id;applySkin()}
+  else if(cat==='songs'){equipped.song=id;songPosition=0;updateAutoTap();}
   showToast(`${shopItems[cat].find(x=>x.id===id).icon} ${shopItems[cat].find(x=>x.id===id).name} equipped!`,'equip');
   saveState();
   renderShop();
@@ -990,15 +1017,28 @@ function setMode(m){
 document.querySelector('.keys-container').addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
 
 // ═══ AUTO TAPPER ═══
-let autoTapInterval=null;
+let autoTapInterval=null,songPosition=0;
 function updateAutoTap(){
-  clearInterval(autoTapInterval);autoTapInterval=null;
+  clearInterval(autoTapInterval);autoTapInterval=null;songPosition=0;
   const rates={auto_lv1:1,auto_lv2:3,auto_lv3:8};
   const maxRate=owned.autoTappers.reduce((m,id)=>Math.max(m,rates[id]||0),0);
   if(!maxRate)return;
   autoTapInterval=setInterval(()=>{
-    triggerKey(Math.floor(Math.random()*noteData.length));
+    const songNotes=SONGS[equipped.song];
+    let idx;
+    if(songNotes){idx=songNotes[songPosition%songNotes.length];songPosition++;}
+    else{idx=Math.floor(Math.random()*noteData.length);}
+    triggerKey(idx);
   },Math.round(1000/maxRate));
+  updateSongIndicator();
+}
+function updateSongIndicator(){
+  const el=document.getElementById('songIndicator'),nameEl=document.getElementById('songName');
+  if(!el)return;
+  const rates={auto_lv1:1,auto_lv2:3,auto_lv3:8};
+  const maxRate=owned.autoTappers.reduce((m,id)=>Math.max(m,rates[id]||0),0);
+  if(maxRate>0){const def=shopItems.songs.find(s=>s.id===equipped.song);nameEl.textContent=def?def.name:'랜덤';el.style.display='';}
+  else{el.style.display='none';}
 }
 
 // ═══ PIXEL CAT ═══
