@@ -81,11 +81,6 @@
   .shop-btn.has-new{animation:shopPulse 2s ease infinite}
   @keyframes shopPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,215,0,0)}50%{box-shadow:0 0 0 6px rgba(255,215,0,.15)}}
 
-  /* ─── Mode buttons ─── */
-  .mode-row{display:flex;gap:5px}
-  .ctrl-btn{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.4);padding:4px 11px;border-radius:14px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-size:.58rem;transition:all .2s}
-  .ctrl-btn:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.8)}
-  .ctrl-btn.active-mode{background:rgba(255,100,216,.15);border-color:rgba(255,100,216,.3);color:#ff6fd8}
 
   /* ═══ SHOP PANEL ═══ */
   .shop-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:50;opacity:0;pointer-events:none;transition:opacity .3s}
@@ -348,11 +343,6 @@
     <span class="rage-label" id="rageLabel">&nbsp;</span>
     <div class="rage-meter"><div class="rage-meter-fill" id="rageFill"></div></div>
   </div>
-  <div class="mode-row">
-    <button class="ctrl-btn active-mode" id="btn-dreamy" onclick="setMode('dreamy')">🌙</button>
-    <button class="ctrl-btn" id="btn-bright" onclick="setMode('bright')">✨</button>
-    <button class="ctrl-btn" id="btn-deep" onclick="setMode('deep')">🌊</button>
-  </div>
   <button class="shop-btn" id="shopBtn" onclick="toggleShop()">🛒</button>
 </div>
 
@@ -404,8 +394,10 @@ const audioCtx=new(window.AudioContext||window.webkitAudioContext)();
 const _saved=JSON.parse(localStorage.getItem('sp_save')||'null');
 let notes=_saved?.notes??0;
 let totalNotes=_saved?.totalNotes??0;
-let equipped=_saved?.equipped??{ tone:'sine', particles:'default', skin:'ivory', ambient:['rain','wave','night','silence'] };
-let owned=_saved?.owned??{ tones:['sine'], particles:['default'], skins:['ivory'], ambients:['rain','wave','night','silence'] };
+let equipped=_saved?.equipped??{ tone:'sine', particles:'default', skin:'ivory', ambient:['rain','wave','night','silence'], mode:'dreamy' };
+let owned=_saved?.owned??{ tones:['sine'], particles:['default'], skins:['ivory'], ambients:['rain','wave','night','silence'], modes:['dreamy','bright','deep'] };
+if(!equipped.mode) equipped.mode='dreamy';
+if(!owned.modes) owned.modes=['dreamy','bright','deep'];
 function saveState(){localStorage.setItem('sp_save',JSON.stringify({notes,totalNotes,equipped,owned}))}
 
 // ═══ SHOP DATA ═══
@@ -436,6 +428,11 @@ const shopItems={
     {id:'fire',      name:'Fire',     desc:'crackling fire',    icon:'🔥', cost:200},
     {id:'forest',    name:'Forest',   desc:'birds & wind',      icon:'🌲', cost:400},
   ],
+  modes:[
+    {id:'dreamy',    name:'Dreamy',   desc:'soft reverb',       icon:'🌙', cost:0},
+    {id:'bright',    name:'Bright',   desc:'crisp attack',      icon:'✨', cost:0},
+    {id:'deep',      name:'Deep',     desc:'bass reverb',       icon:'🌊', cost:0},
+  ],
 };
 
 // ═══ NOTE DATA ═══
@@ -458,7 +455,7 @@ const noteData=[
 ];
 
 // ═══ AUDIO ═══
-let currentMode='dreamy',sustainOn=false;
+let currentMode=equipped.mode||'dreamy',sustainOn=false;
 const modeSettings={
   dreamy:{wave:'sine',attack:.05,decay:3,reverb:.65,detune:5,colors:['#ff6fd8','#3813c2','#00fff0']},
   bright:{wave:'triangle',attack:.008,decay:1,reverb:.3,detune:0,colors:['#ffd700','#ff6b35','#ff1493']},
@@ -536,7 +533,7 @@ function renderAmbientOptions(){
     const isCurrent=currentAmbient?.id===id;
     const el=document.createElement('div');
     el.className=`amb-option ${isCurrent?'active':''} ${!isOwned?'locked':''}`;
-    el.innerHTML=`<span class="amb-icon">${def.icon}</span>${def.label.replace(def.icon+' ','')}`;
+    el.innerHTML=`<span class="amb-icon">${def.icon}</span>`;
     if(isOwned){
       el.addEventListener('click',()=>{
         autoAmbient=false;
@@ -786,6 +783,7 @@ function renderShop(){
   document.getElementById('shopCurrency').textContent=formatNum(notes);
 
   const cats=[
+    {key:'modes',title:'🎼',items:shopItems.modes,ownedKey:'modes',equippedKey:'mode'},
     {key:'tones',title:'🎵',items:shopItems.tones,ownedKey:'tones',equippedKey:'tone'},
     {key:'particles',title:'✦',items:shopItems.particles,ownedKey:'particles',equippedKey:'particles'},
     {key:'skins',title:'🎹',items:shopItems.skins,ownedKey:'skins',equippedKey:'skin'},
@@ -846,7 +844,8 @@ function buyItem(cat,id,cost){
 }
 
 function equipItem(cat,id){
-  if(cat==='tones')equipped.tone=id;
+  if(cat==='modes'){currentMode=id;equipped.mode=id;reverbGain.gain.value=modeSettings[id].reverb;}
+  else if(cat==='tones')equipped.tone=id;
   else if(cat==='particles')equipped.particles=id;
   else if(cat==='skins'){equipped.skin=id;applySkin()}
   showToast(`${shopItems[cat].find(x=>x.id===id).icon} ${shopItems[cat].find(x=>x.id===id).name} equipped!`,'equip');
@@ -871,8 +870,7 @@ function showToast(msg,type){
 }
 
 function setMode(m){
-  currentMode=m;['dreamy','bright','deep'].forEach(x=>document.getElementById('btn-'+x).classList.remove('active-mode'));
-  document.getElementById('btn-'+m).classList.add('active-mode');reverbGain.gain.value=modeSettings[m].reverb;
+  currentMode=m;equipped.mode=m;reverbGain.gain.value=modeSettings[m].reverb;
 }
 
 document.querySelector('.keys-container').addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
