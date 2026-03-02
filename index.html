@@ -21,39 +21,6 @@
   @keyframes gradShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
   @keyframes rageTitle{0%{transform:translate(-2px,0)}50%{transform:translate(2px,-1px)}100%{transform:translate(-1px,1px)}}
 
-  .ambient-ctrl{position:relative;display:flex;align-items:center;gap:4px}
-  .ambient-now{padding:3px 10px;border-radius:10px 0 0 10px;font-size:.5rem;color:rgba(255,255,255,.3);letter-spacing:1px;font-weight:300;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);transition:all .8s;cursor:pointer;min-width:80px;text-align:center}
-  .ambient-now:hover{background:rgba(255,255,255,.06)}
-  .ambient-now.rain{color:rgba(120,180,255,.5);border-color:rgba(120,180,255,.12)}
-  .ambient-now.wave{color:rgba(100,220,200,.5);border-color:rgba(100,220,200,.12)}
-  .ambient-now.night{color:rgba(170,150,255,.5);border-color:rgba(170,150,255,.12)}
-  .ambient-now.fire{color:rgba(255,160,60,.5);border-color:rgba(255,160,60,.12)}
-  .ambient-now.forest{color:rgba(100,200,120,.5);border-color:rgba(100,200,120,.12)}
-  .ambient-now.muted{color:rgba(255,255,255,.15)!important;border-color:rgba(255,255,255,.04)!important;text-decoration:line-through}
-
-  .ambient-mute{width:26px;height:24px;border-radius:0 10px 10px 0;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);border-left:none;color:rgba(255,255,255,.3);font-size:.6rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
-  .ambient-mute:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.6)}
-  .ambient-mute.muted{color:rgba(255,60,60,.5);background:rgba(255,60,60,.05)}
-
-  .ambient-dropdown{position:absolute;top:100%;left:0;margin-top:6px;background:rgba(16,16,24,.95);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:6px;min-width:160px;z-index:20;opacity:0;pointer-events:none;transform:translateY(-6px);transition:all .2s;backdrop-filter:blur(12px);box-shadow:0 10px 30px rgba(0,0,0,.5)}
-  .ambient-dropdown.open{opacity:1;pointer-events:auto;transform:translateY(0)}
-
-  .amb-option{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:7px;cursor:pointer;transition:all .15s;font-size:.58rem;color:rgba(255,255,255,.4)}
-  .amb-option:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.7)}
-  .amb-option.active{background:rgba(255,255,255,.08);color:rgba(255,255,255,.7)}
-  .amb-option.active::after{content:'▸';margin-left:auto;font-size:.5rem;color:rgba(100,255,180,.5)}
-  .amb-option.locked{opacity:.35;cursor:default}
-  .amb-option.locked::after{content:'🔒';margin-left:auto;font-size:.5rem}
-  .amb-option .amb-icon{font-size:.8rem;width:20px;text-align:center}
-
-  .amb-divider{height:1px;background:rgba(255,255,255,.05);margin:4px 6px}
-  .amb-auto-row{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:7px;font-size:.55rem;color:rgba(255,255,255,.3);cursor:pointer;transition:all .15s}
-  .amb-auto-row:hover{background:rgba(255,255,255,.05)}
-  .amb-auto-toggle{width:28px;height:15px;border-radius:8px;background:rgba(255,255,255,.1);position:relative;transition:all .2s;flex-shrink:0}
-  .amb-auto-toggle::after{content:'';position:absolute;top:2px;left:2px;width:11px;height:11px;border-radius:50%;background:rgba(255,255,255,.3);transition:all .2s}
-  .amb-auto-toggle.on{background:rgba(100,255,180,.2)}
-  .amb-auto-toggle.on::after{left:15px;background:rgba(100,255,180,.7)}
-
   .rage-section{display:flex;align-items:center;gap:6px}
   .rage-label{font-size:.48rem;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,.15);transition:color .3s;min-width:70px;text-align:right}
   .rage-label.heated{color:#f59e0b}
@@ -368,18 +335,6 @@
 
 <div class="top-hud" id="mainContent">
   <span class="brand" id="title">STRESS PIANO</span>
-  <div class="ambient-ctrl" id="ambientCtrl">
-    <div class="ambient-now" id="ambientNow" onclick="toggleAmbientDropdown()">🌙 silence</div>
-    <button class="ambient-mute" id="ambientMute" onclick="toggleMute()">🔊</button>
-    <div class="ambient-dropdown" id="ambientDropdown">
-      <div class="amb-auto-row" onclick="toggleAutoAmbient()">
-        <div class="amb-auto-toggle on" id="autoToggle"></div>
-        <span>🔄</span>
-      </div>
-      <div class="amb-divider"></div>
-      <div id="ambientOptions"></div>
-    </div>
-  </div>
   <div class="currency" id="currencyDisplay"><span class="note-icon">♪</span><span id="currencyAmount">0</span></div>
   <div class="multiplier" id="multiplierDisplay">×1</div>
   <div class="song-indicator" id="songIndicator" style="display:none">🎶 <span id="songName"></span></div>
@@ -448,8 +403,8 @@ const audioCtx=new(window.AudioContext||window.webkitAudioContext)();
 const _saved=JSON.parse(localStorage.getItem('sp_save')||'null');
 let notes=_saved?.notes??0;
 let totalNotes=_saved?.totalNotes??0;
-let equipped=_saved?.equipped??{ tone:'sine', particles:'default', skin:'ivory', ambient:['rain','wave','night','silence'], mode:'dreamy' };
-let owned=_saved?.owned??{ tones:['sine'], particles:['default'], skins:['ivory'], ambients:['rain','wave','night','silence'], modes:['dreamy','bright','deep'] };
+let equipped=_saved?.equipped??{ tone:'sine', particles:'default', skin:'ivory', mode:'dreamy' };
+let owned=_saved?.owned??{ tones:['sine'], particles:['default'], skins:['ivory'], modes:['dreamy','bright','deep'] };
 if(!equipped.mode) equipped.mode='dreamy';
 if(!owned.modes) owned.modes=['dreamy','bright','deep'];
 let stats=_saved?.stats??{fury:0,keys:0};
@@ -510,10 +465,6 @@ const shopItems={
     {id:'marble',    name:'Marble',   desc:'stone texture',     icon:'🤍', cost:200},
     {id:'midnight',  name:'Midnight', desc:'dark blue',         icon:'🌙', cost:400},
     {id:'rosegold',  name:'Rose Gold',desc:'warm blush',        icon:'🌹', cost:600},
-  ],
-  ambients:[
-    {id:'fire',      name:'Fire',     desc:'crackling fire',    icon:'🔥', cost:200},
-    {id:'forest',    name:'Forest',   desc:'birds & wind',      icon:'🌲', cost:400},
   ],
   modes:[
     {id:'dreamy',    name:'Dreamy',   desc:'soft reverb',       icon:'🌙', cost:0},
@@ -620,123 +571,6 @@ function playNote(ni,idx){
   setTimeout(()=>{try{pan.disconnect()}catch(e){}},dt*1000+200);
 }
 
-// ═══ AMBIENT ═══
-const ambientNow=document.getElementById('ambientNow');
-const ambientMuteBtn=document.getElementById('ambientMute');
-const ambientDropdown=document.getElementById('ambientDropdown');
-const ambientOptions=document.getElementById('ambientOptions');
-const autoToggle=document.getElementById('autoToggle');
-let currentAmbient=null,ambientStarted=false,ambientMuted=false,autoAmbient=true,autoTimer=null;
-let dropdownOpen=false;
-
-const ambientDefs={
-  rain:   {label:'🌧️',css:'rain',   icon:'🌧️'},
-  wave:   {label:'🌊', css:'wave',   icon:'🌊'},
-  night:  {label:'🦗', css:'night',  icon:'🦗'},
-  silence:{label:'🌙', css:'',       icon:'🌙'},
-  fire:   {label:'🔥', css:'fire',   icon:'🔥'},
-  forest: {label:'🌲', css:'forest', icon:'🌲'},
-};
-
-function renderAmbientOptions(){
-  ambientOptions.innerHTML='';
-  const allAmbs=['silence','rain','wave','night','fire','forest'];
-  allAmbs.forEach(id=>{
-    const def=ambientDefs[id];
-    const isOwned=id==='silence'||owned.ambients.includes(id);
-    const isCurrent=currentAmbient?.id===id;
-    const el=document.createElement('div');
-    el.className=`amb-option ${isCurrent?'active':''} ${!isOwned?'locked':''}`;
-    el.innerHTML=`<span class="amb-icon">${def.icon}</span>`;
-    if(isOwned){
-      el.addEventListener('click',()=>{
-        autoAmbient=false;
-        autoToggle.classList.remove('on');
-        if(autoTimer){clearTimeout(autoTimer);autoTimer=null}
-        switchAmb(id);
-        renderAmbientOptions();
-      });
-    }
-    ambientOptions.appendChild(el);
-  });
-}
-
-function toggleAmbientDropdown(){
-  dropdownOpen=!dropdownOpen;
-  ambientDropdown.classList.toggle('open',dropdownOpen);
-  if(dropdownOpen)renderAmbientOptions();
-}
-
-// Close dropdown when clicking elsewhere
-document.addEventListener('pointerdown',e=>{
-  if(dropdownOpen&&!document.getElementById('ambientCtrl').contains(e.target)){
-    dropdownOpen=false;
-    ambientDropdown.classList.remove('open');
-  }
-});
-
-function toggleMute(){
-  ambientMuted=!ambientMuted;
-  ambientMuteBtn.textContent=ambientMuted?'🔇':'🔊';
-  ambientMuteBtn.classList.toggle('muted',ambientMuted);
-  ambientNow.classList.toggle('muted',ambientMuted);
-  if(ambientMuted){
-    if(currentAmbient?.nodes)currentAmbient.nodes.fadeOut();
-    currentAmbient={...currentAmbient,nodes:null};
-  } else {
-    // Re-play current ambient
-    const id=currentAmbient?.id;
-    if(id&&id!=='silence'){
-      const fn={rain:mkRain,wave:mkWave,night:mkNight,fire:mkFire,forest:mkForest}[id];
-      if(fn)currentAmbient.nodes=fn();
-    }
-  }
-}
-
-function toggleAutoAmbient(){
-  autoAmbient=!autoAmbient;
-  autoToggle.classList.toggle('on',autoAmbient);
-  if(autoAmbient){
-    schedNext();
-  } else {
-    if(autoTimer){clearTimeout(autoTimer);autoTimer=null}
-  }
-}
-
-function startAmbientCycle(){if(ambientStarted)return;ambientStarted=true;if(autoAmbient)schedNext();else switchAmb('silence')}
-
-function schedNext(){
-  if(!autoAmbient)return;
-  const pool=equipped.ambient.filter(a=>!currentAmbient||a!==currentAmbient.id);
-  const pick=pool[Math.floor(Math.random()*pool.length)];
-  switchAmb(pick);
-  autoTimer=setTimeout(schedNext,25000+Math.random()*30000);
-}
-
-function switchAmb(id){
-  if(currentAmbient?.nodes)currentAmbient.nodes.fadeOut();
-  const def=ambientDefs[id];
-  ambientNow.className='ambient-now '+def.css+(ambientMuted?' muted':'');
-  ambientNow.textContent=def.label;
-  if(id==='silence'||ambientMuted){currentAmbient={id,nodes:null};return}
-  const fn={rain:mkRain,wave:mkWave,night:mkNight,fire:mkFire,forest:mkForest}[id];
-  currentAmbient={id,nodes:fn?fn():null};
-  if(dropdownOpen)renderAmbientOptions();
-}
-
-const _noiseBufCache={};
-function noiseBuf(s){if(_noiseBufCache[s])return _noiseBufCache[s];const l=audioCtx.sampleRate*s,b=audioCtx.createBuffer(2,l,audioCtx.sampleRate);for(let c=0;c<2;c++){const d=b.getChannelData(c);for(let i=0;i<l;i++)d[i]=Math.random()*2-1}_noiseBufCache[s]=b;return b}
-
-function mkRain(){const s=audioCtx.createBufferSource();s.buffer=noiseBuf(2);s.loop=true;const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=4000;const bp=audioCtx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=7000;bp.Q.value=.5;const g=audioCtx.createGain();g.gain.value=0;g.gain.linearRampToValueAtTime(.09,audioCtx.currentTime+3);const l=audioCtx.createOscillator(),lg=audioCtx.createGain();l.frequency.value=.25;lg.gain.value=.015;l.connect(lg);lg.connect(g.gain);l.start();s.connect(hp);hp.connect(bp);bp.connect(g);g.connect(audioCtx.destination);s.start();return{fadeOut(){g.gain.linearRampToValueAtTime(0,audioCtx.currentTime+2);setTimeout(()=>{try{s.stop();l.stop()}catch(e){}},2500)}}}
-
-function mkWave(){const s=audioCtx.createBufferSource();s.buffer=noiseBuf(4);s.loop=true;const lp=audioCtx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=350;lp.Q.value=1;const g=audioCtx.createGain();g.gain.value=0;g.gain.linearRampToValueAtTime(.11,audioCtx.currentTime+3);const l=audioCtx.createOscillator(),lg=audioCtx.createGain();l.frequency.value=.07;lg.gain.value=180;l.connect(lg);lg.connect(lp.frequency);l.start();const l2=audioCtx.createOscillator(),lg2=audioCtx.createGain();l2.frequency.value=.05;lg2.gain.value=.05;l2.connect(lg2);lg2.connect(g.gain);l2.start();s.connect(lp);lp.connect(g);g.connect(audioCtx.destination);s.start();return{fadeOut(){g.gain.linearRampToValueAtTime(0,audioCtx.currentTime+2.5);setTimeout(()=>{try{s.stop();l.stop();l2.stop()}catch(e){}},3000)}}}
-
-function mkNight(){const s=audioCtx.createBufferSource();s.buffer=noiseBuf(3);s.loop=true;const bp=audioCtx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=5500;bp.Q.value=8;const g=audioCtx.createGain();g.gain.value=0;g.gain.linearRampToValueAtTime(.035,audioCtx.currentTime+2);const l=audioCtx.createOscillator(),lg=audioCtx.createGain();l.frequency.value=3.5;lg.gain.value=.03;l.connect(lg);lg.connect(g.gain);l.start();s.connect(bp);bp.connect(g);g.connect(audioCtx.destination);s.start();return{fadeOut(){g.gain.linearRampToValueAtTime(0,audioCtx.currentTime+2);setTimeout(()=>{try{s.stop();l.stop()}catch(e){}},2500)}}}
-
-function mkFire(){const s=audioCtx.createBufferSource();s.buffer=noiseBuf(3);s.loop=true;const bp=audioCtx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=800;bp.Q.value=1.5;const lp=audioCtx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2000;const g=audioCtx.createGain();g.gain.value=0;g.gain.linearRampToValueAtTime(.07,audioCtx.currentTime+2);const l=audioCtx.createOscillator(),lg=audioCtx.createGain();l.frequency.value=2;lg.gain.value=.04;l.connect(lg);lg.connect(g.gain);l.start();s.connect(bp);bp.connect(lp);lp.connect(g);g.connect(audioCtx.destination);s.start();return{fadeOut(){g.gain.linearRampToValueAtTime(0,audioCtx.currentTime+2);setTimeout(()=>{try{s.stop();l.stop()}catch(e){}},2500)}}}
-
-function mkForest(){const s=audioCtx.createBufferSource();s.buffer=noiseBuf(4);s.loop=true;const bp=audioCtx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=3000;bp.Q.value=2;const g=audioCtx.createGain();g.gain.value=0;g.gain.linearRampToValueAtTime(.04,audioCtx.currentTime+3);const l=audioCtx.createOscillator(),lg=audioCtx.createGain();l.frequency.value=.15;lg.gain.value=800;l.connect(lg);lg.connect(bp.frequency);l.start();const l2=audioCtx.createOscillator(),lg2=audioCtx.createGain();l2.frequency.value=1.8;lg2.gain.value=.025;l2.connect(lg2);lg2.connect(g.gain);l2.start();s.connect(bp);bp.connect(g);g.connect(audioCtx.destination);s.start();return{fadeOut(){g.gain.linearRampToValueAtTime(0,audioCtx.currentTime+2.5);setTimeout(()=>{try{s.stop();l.stop();l2.stop()}catch(e){}},3000)}}}
-
 // ═══ RAGE ═══
 let noteTimestamps=[],rageLevel=0,_furyWasActive=false;
 const rageEl=document.getElementById('rageFill'),rageLabelEl=document.getElementById('rageLabel'),rageOverlay=document.getElementById('rageOverlay'),titleEl=document.getElementById('title'),contentEl=document.getElementById('mainContent');
@@ -779,7 +613,6 @@ if(_saved)applySkin();
 updateCurrencyDisplay();
 
 function triggerKey(idx){
-  if(!ambientStarted)startAmbientCycle();
   playNote(noteData[idx],idx);
   pianoKeyEls[idx]?.classList.add('active');
   registerHit();
@@ -791,7 +624,7 @@ function releaseKey(idx){pianoKeyEls[idx]?.classList.remove('active')}
 
 const keyMap={};noteData.forEach((n,i)=>{keyMap[n.key.toLowerCase()]=i});
 const activeKeysSet=new Set();
-document.addEventListener('keydown',e=>{if(e.repeat)return;if(e.code==='Space'){e.preventDefault();sustainOn=true;document.getElementById('sustainIndicator').classList.add('on');if(!ambientStarted)startAmbientCycle();return}const k=e.key.toLowerCase();if(keyMap[k]!==undefined&&!activeKeysSet.has(k)){e.preventDefault();activeKeysSet.add(k);triggerKey(keyMap[k])}});
+document.addEventListener('keydown',e=>{if(e.repeat)return;if(e.code==='Space'){e.preventDefault();sustainOn=true;document.getElementById('sustainIndicator').classList.add('on');return}const k=e.key.toLowerCase();if(keyMap[k]!==undefined&&!activeKeysSet.has(k)){e.preventDefault();activeKeysSet.add(k);triggerKey(keyMap[k])}});
 document.addEventListener('keyup',e=>{if(e.code==='Space'){sustainOn=false;document.getElementById('sustainIndicator').classList.remove('on');return}const k=e.key.toLowerCase();if(keyMap[k]!==undefined){activeKeysSet.delete(k);releaseKey(keyMap[k])}});
 
 // ═══ PARTICLES ═══
@@ -906,7 +739,6 @@ function renderShop(){
     {key:'tones',title:'🎵',items:shopItems.tones,ownedKey:'tones',equippedKey:'tone'},
     {key:'particles',title:'✦',items:shopItems.particles,ownedKey:'particles',equippedKey:'particles'},
     {key:'skins',title:'🎹',items:shopItems.skins,ownedKey:'skins',equippedKey:'skin'},
-    {key:'ambients',title:'🌧️',items:shopItems.ambients,ownedKey:'ambients',equippedKey:null},
     {key:'autoTappers',title:'🤖',items:shopItems.autoTappers,ownedKey:'autoTappers',equippedKey:null},
     {key:'cats',title:'🐱',items:shopItems.cats,ownedKey:'cats',equippedKey:'cat'},
     {key:'songs',title:'🎶',items:shopItems.songs,ownedKey:'songs',equippedKey:'song'},
@@ -985,7 +817,6 @@ function buyItem(cat,id,cost){
   if(cat==='tones')owned.tones.push(id);
   else if(cat==='particles')owned.particles.push(id);
   else if(cat==='skins')owned.skins.push(id);
-  else if(cat==='ambients')owned.ambients.push(id);
   else if(cat==='autoTappers'){owned.autoTappers.push(id);updateAutoTap();checkAchievements();}
   else if(cat==='cats'){owned.cats.push(id);}
   else if(cat==='songs'){owned.songs.push(id);}
@@ -994,7 +825,6 @@ function buyItem(cat,id,cost){
   if(cat==='tones')equipped.tone=id;
   else if(cat==='particles')equipped.particles=id;
   else if(cat==='skins'){equipped.skin=id;applySkin()}
-  else if(cat==='ambients'){equipped.ambient=owned.ambients;switchAmb(id);renderAmbientOptions()}
   else if(cat==='cats'){equipped.cat=id;updatePixelCat();}
   else if(cat==='songs'){equipped.song=id;songPosition=0;updateAutoTap();}
 
