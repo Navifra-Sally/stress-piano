@@ -129,6 +129,16 @@
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .toast.unlock{background:rgba(255,215,0,.15);border:1px solid rgba(255,215,0,.3);color:#ffd700}
   .toast.equip{background:rgba(100,255,180,.12);border:1px solid rgba(100,255,180,.25);color:rgba(100,255,180,.8)}
+  .toast.achievement{background:rgba(255,215,0,.18);border:1px solid rgba(255,215,0,.5);color:#ffd700;font-size:.72rem}
+
+  /* ─── Offline Modal ─── */
+  .offline-modal{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:200}
+  .offline-card{background:#1a1a2e;border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:32px 40px;text-align:center;color:#fff;min-width:220px}
+  .offline-title{font-size:1rem;font-weight:700;margin-bottom:6px}
+  .offline-sub{font-size:.72rem;color:rgba(255,255,255,.45);margin-bottom:14px;line-height:1.5}
+  .offline-earned{font-size:1.7rem;font-weight:700;color:#ffd700;margin-bottom:22px}
+  .offline-ok{background:rgba(255,215,0,.15);border:1px solid rgba(255,215,0,.3);color:#ffd700;padding:8px 28px;border-radius:12px;cursor:pointer;font-size:.82rem;font-family:inherit;transition:background .2s}
+  .offline-ok:hover{background:rgba(255,215,0,.25)}
 
   /* ═══ PIANO ═══ */
   .piano-stage{position:fixed;bottom:0;left:0;right:0;z-index:5}
@@ -363,6 +373,16 @@
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
+<!-- Offline Earnings Modal -->
+<div class="offline-modal" id="offlineModal" style="display:none">
+  <div class="offline-card">
+    <div class="offline-title">⏰ 오프라인 수익</div>
+    <div class="offline-sub" id="offlineTime"></div>
+    <div class="offline-earned" id="offlineEarned"></div>
+    <button class="offline-ok" onclick="closeOfflineModal()">확인</button>
+  </div>
+</div>
+
 <!-- Ad Sticker -->
 <div class="ad-sticker" id="adSticker">
   <button class="ad-close" id="adClose">✕</button>
@@ -398,7 +418,33 @@ let equipped=_saved?.equipped??{ tone:'sine', particles:'default', skin:'ivory',
 let owned=_saved?.owned??{ tones:['sine'], particles:['default'], skins:['ivory'], ambients:['rain','wave','night','silence'], modes:['dreamy','bright','deep'] };
 if(!equipped.mode) equipped.mode='dreamy';
 if(!owned.modes) owned.modes=['dreamy','bright','deep'];
-function saveState(){localStorage.setItem('sp_save',JSON.stringify({notes,totalNotes,equipped,owned}))}
+let stats=_saved?.stats??{fury:0,keys:0};
+if(!owned.achievements) owned.achievements=[];
+if(!owned.autoTappers)  owned.autoTappers=[];
+function saveState(){localStorage.setItem('sp_save',JSON.stringify({notes,totalNotes,equipped,owned,stats,lastOnline:Date.now()}))}
+
+// ═══ ACHIEVEMENTS ═══
+const ACH_DEFS=[
+  {id:'notes_100',  name:'첫 음표',          desc:'♪ 100 총 획득',      icon:'🎵', check:()=>totalNotes>=100,             reward:50},
+  {id:'notes_1k',   name:'연주가',           desc:'♪ 1,000 총 획득',    icon:'🎶', check:()=>totalNotes>=1000,            reward:200},
+  {id:'notes_10k',  name:'피아니스트',       desc:'♪ 10,000 총 획득',   icon:'🎹', check:()=>totalNotes>=10000,           reward:1000},
+  {id:'notes_100k', name:'거장',             desc:'♪ 100,000 총 획득',  icon:'👑', check:()=>totalNotes>=100000,          reward:5000},
+  {id:'fury_1',     name:'분노 각성',        desc:'FURY 첫 달성',        icon:'🔥', check:()=>stats.fury>=1,              reward:500},
+  {id:'fury_10',    name:'분노의 피아니스트',desc:'FURY 10회 달성',      icon:'💢', check:()=>stats.fury>=10,             reward:2000},
+  {id:'keys_1k',    name:'연습생',           desc:'총 1,000번 연주',     icon:'⌨️', check:()=>stats.keys>=1000,           reward:100},
+  {id:'keys_10k',   name:'타건의 신',        desc:'총 10,000번 연주',    icon:'⚡', check:()=>stats.keys>=10000,          reward:500},
+  {id:'auto_first', name:'방치의 시작',      desc:'자동 연주기 구매',    icon:'🤖', check:()=>owned.autoTappers.length>0, reward:300},
+];
+function checkAchievements(){
+  ACH_DEFS.forEach(a=>{
+    if(owned.achievements.includes(a.id)||!a.check())return;
+    owned.achievements.push(a.id);
+    if(a.reward){notes+=a.reward;totalNotes+=a.reward;updateCurrencyDisplay();}
+    showToast(`🏆 ${a.name}! +♪${formatNum(a.reward)}`,'achievement');
+    saveState();
+    if(document.getElementById('shopOverlay').classList.contains('open'))renderShop();
+  });
+}
 
 // ═══ SHOP DATA ═══
 const shopItems={
@@ -432,6 +478,11 @@ const shopItems={
     {id:'dreamy',    name:'Dreamy',   desc:'soft reverb',       icon:'🌙', cost:0},
     {id:'bright',    name:'Bright',   desc:'crisp attack',      icon:'✨', cost:0},
     {id:'deep',      name:'Deep',     desc:'bass reverb',       icon:'🌊', cost:0},
+  ],
+  autoTappers:[
+    {id:'auto_lv1',name:'자동 연주 Ⅰ', desc:'1회/초 자동 연주', icon:'🤖', cost:2000,  rate:1, prereq:null},
+    {id:'auto_lv2',name:'자동 연주 Ⅱ', desc:'3회/초 자동 연주', icon:'🦾', cost:8000,  rate:3, prereq:'auto_lv1'},
+    {id:'auto_lv3',name:'자동 연주 Ⅲ', desc:'8회/초 자동 연주', icon:'⚡', cost:30000, rate:8, prereq:'auto_lv2'},
   ],
 };
 
@@ -624,7 +675,7 @@ function mkFire(){const s=audioCtx.createBufferSource();s.buffer=noiseBuf(3);s.l
 function mkForest(){const s=audioCtx.createBufferSource();s.buffer=noiseBuf(4);s.loop=true;const bp=audioCtx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=3000;bp.Q.value=2;const g=audioCtx.createGain();g.gain.value=0;g.gain.linearRampToValueAtTime(.04,audioCtx.currentTime+3);const l=audioCtx.createOscillator(),lg=audioCtx.createGain();l.frequency.value=.15;lg.gain.value=800;l.connect(lg);lg.connect(bp.frequency);l.start();const l2=audioCtx.createOscillator(),lg2=audioCtx.createGain();l2.frequency.value=1.8;lg2.gain.value=.025;l2.connect(lg2);lg2.connect(g.gain);l2.start();s.connect(bp);bp.connect(g);g.connect(audioCtx.destination);s.start();return{fadeOut(){g.gain.linearRampToValueAtTime(0,audioCtx.currentTime+2.5);setTimeout(()=>{try{s.stop();l.stop();l2.stop()}catch(e){}},3000)}}}
 
 // ═══ RAGE ═══
-let noteTimestamps=[],rageLevel=0;
+let noteTimestamps=[],rageLevel=0,_furyWasActive=false;
 const rageEl=document.getElementById('rageFill'),rageLabelEl=document.getElementById('rageLabel'),rageOverlay=document.getElementById('rageOverlay'),titleEl=document.getElementById('title'),contentEl=document.getElementById('mainContent');
 function registerHit(){noteTimestamps.push(Date.now())}
 let shakeTimer=null;
@@ -644,6 +695,7 @@ function addNotes(n){
   currencyBox.classList.add('pop');setTimeout(()=>currencyBox.classList.remove('pop'),120);
   clearTimeout(_saveTimer);_saveTimer=setTimeout(saveState,2000);
   checkNotesAds();
+  checkAchievements();
 }
 function formatNum(n){return n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':Math.floor(n).toString()}
 
@@ -665,6 +717,7 @@ function triggerKey(idx){
   playNote(noteData[idx],idx);
   pianoKeyEls[idx]?.classList.add('active');
   registerHit();
+  stats.keys++;
   addNotes(getMultiplier());
   spawnParticles(idx);pulseBackground();
 }
@@ -737,10 +790,10 @@ function animate(){
   const mEl=document.getElementById('multiplierDisplay');
   mEl.textContent='×'+m;
   mEl.className=m>1?'multiplier boosted':'multiplier';
-  if(rageLevel>=20){rageEl.classList.add('fury');rageLabelEl.classList.add('fury');rageLabelEl.textContent='🔥 FURY ×5';rageOverlay.classList.add('active');rageOverlay.style.background='radial-gradient(ellipse at center,transparent 20%,rgba(255,20,0,.25) 100%)';titleEl.classList.add('rage-title');shakeScreen(5);checkFuryAd()}
-  else if(rageLevel>=12){rageEl.classList.add('rage');rageLabelEl.classList.add('rage');rageLabelEl.textContent='💢 RAGE ×3';rageOverlay.classList.add('active');rageOverlay.style.background='radial-gradient(ellipse at center,transparent 30%,rgba(255,40,0,.12) 100%)';titleEl.classList.add('rage-title');shakeScreen(2.5)}
-  else if(rageLevel>=6){rageEl.classList.add('heated');rageLabelEl.classList.add('heated');rageLabelEl.textContent='⚡ ×2'}
-  else rageLabelEl.textContent=rageLevel>1?'♪':'\u00A0';
+  if(rageLevel>=20){rageEl.classList.add('fury');rageLabelEl.classList.add('fury');rageLabelEl.textContent='🔥 FURY ×5';rageOverlay.classList.add('active');rageOverlay.style.background='radial-gradient(ellipse at center,transparent 20%,rgba(255,20,0,.25) 100%)';titleEl.classList.add('rage-title');shakeScreen(5);checkFuryAd();if(!_furyWasActive){_furyWasActive=true;stats.fury++;checkAchievements();}}
+  else if(rageLevel>=12){_furyWasActive=false;rageEl.classList.add('rage');rageLabelEl.classList.add('rage');rageLabelEl.textContent='💢 RAGE ×3';rageOverlay.classList.add('active');rageOverlay.style.background='radial-gradient(ellipse at center,transparent 30%,rgba(255,40,0,.12) 100%)';titleEl.classList.add('rage-title');shakeScreen(2.5)}
+  else if(rageLevel>=6){_furyWasActive=false;rageEl.classList.add('heated');rageLabelEl.classList.add('heated');rageLabelEl.textContent='⚡ ×2'}
+  else{_furyWasActive=false;rageLabelEl.textContent=rageLevel>1?'♪':'\u00A0';}
 
   // ── Canvas render ──
   bgPulse.r+=(bgPulse.target.r-bgPulse.r)*.04;bgPulse.g+=(bgPulse.target.g-bgPulse.g)*.04;bgPulse.b+=(bgPulse.target.b-bgPulse.b)*.04;
@@ -788,6 +841,7 @@ function renderShop(){
     {key:'particles',title:'✦',items:shopItems.particles,ownedKey:'particles',equippedKey:'particles'},
     {key:'skins',title:'🎹',items:shopItems.skins,ownedKey:'skins',equippedKey:'skin'},
     {key:'ambients',title:'🌧️',items:shopItems.ambients,ownedKey:'ambients',equippedKey:null},
+    {key:'autoTappers',title:'🤖',items:shopItems.autoTappers,ownedKey:'autoTappers',equippedKey:null},
   ];
 
   cats.forEach(cat=>{
@@ -797,7 +851,9 @@ function renderShop(){
     cat.items.forEach(item=>{
       const isOwned=owned[cat.ownedKey].includes(item.id);
       const isEquipped=cat.equippedKey?equipped[cat.equippedKey]===item.id:owned[cat.ownedKey].includes(item.id);
-      const canBuy=!isOwned&&notes>=item.cost;
+      // prereq 체크 (자동연주기)
+      const prereqMet=!item.prereq||owned[cat.ownedKey].includes(item.prereq);
+      const canBuy=!isOwned&&notes>=item.cost&&prereqMet;
 
       const el=document.createElement('div');
       el.className=`shop-item ${isEquipped?'equipped':isOwned?'owned':''}`;
@@ -806,13 +862,29 @@ function renderShop(){
       if(isEquipped&&cat.equippedKey) btnHtml=`<button class="buy-btn equipped-btn">✓</button>`;
       else if(isOwned&&cat.equippedKey) btnHtml=`<button class="buy-btn equip-btn" data-cat="${cat.key}" data-id="${item.id}">equip</button>`;
       else if(isOwned) btnHtml=`<button class="buy-btn equipped-btn">✓</button>`;
-      else btnHtml=`<button class="buy-btn ${canBuy?'can-buy':'cant-buy'}" data-cat="${cat.key}" data-id="${item.id}" data-cost="${item.cost}">${canBuy?'♪'+item.cost:'♪'+item.cost}</button>`;
+      else if(!prereqMet) btnHtml=`<button class="buy-btn cant-buy">🔒</button>`;
+      else btnHtml=`<button class="buy-btn ${canBuy?'can-buy':'cant-buy'}" data-cat="${cat.key}" data-id="${item.id}" data-cost="${item.cost}">♪${item.cost}</button>`;
 
       el.innerHTML=`<div class="item-icon">${item.icon}</div><div class="item-info"><div class="item-name">${item.name}</div><div class="item-desc">${item.desc}</div></div><div class="item-action">${btnHtml}</div>`;
       catEl.appendChild(el);
     });
     scroll.appendChild(catEl);
   });
+
+  // ── 업적 탭 ──
+  const achEl=document.createElement('div');achEl.className='shop-category';
+  achEl.innerHTML=`<div class="shop-cat-title">🏆</div>`;
+  ACH_DEFS.forEach(a=>{
+    const isUnlocked=owned.achievements.includes(a.id);
+    const el=document.createElement('div');
+    el.className=`shop-item ${isUnlocked?'equipped':''}`;
+    const btnHtml=isUnlocked
+      ?`<button class="buy-btn equipped-btn">✓</button>`
+      :`<button class="buy-btn cant-buy" style="font-size:.6rem">+♪${formatNum(a.reward)}</button>`;
+    el.innerHTML=`<div class="item-icon" style="${isUnlocked?'':'filter:grayscale(1);opacity:.4'}">${a.icon}</div><div class="item-info"><div class="item-name">${a.name}</div><div class="item-desc">${a.desc}</div></div><div class="item-action">${btnHtml}</div>`;
+    achEl.appendChild(el);
+  });
+  scroll.appendChild(achEl);
 
   // Event delegation
   scroll.querySelectorAll('.can-buy').forEach(btn=>{
@@ -832,6 +904,7 @@ function buyItem(cat,id,cost){
   else if(cat==='particles')owned.particles.push(id);
   else if(cat==='skins')owned.skins.push(id);
   else if(cat==='ambients')owned.ambients.push(id);
+  else if(cat==='autoTappers'){owned.autoTappers.push(id);updateAutoTap();checkAchievements();}
 
   // Auto equip
   if(cat==='tones')equipped.tone=id;
@@ -874,6 +947,36 @@ function setMode(m){
 }
 
 document.querySelector('.keys-container').addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
+
+// ═══ AUTO TAPPER ═══
+let autoTapInterval=null;
+function updateAutoTap(){
+  clearInterval(autoTapInterval);autoTapInterval=null;
+  const rates={auto_lv1:1,auto_lv2:3,auto_lv3:8};
+  const maxRate=owned.autoTappers.reduce((m,id)=>Math.max(m,rates[id]||0),0);
+  if(!maxRate)return;
+  autoTapInterval=setInterval(()=>{
+    triggerKey(Math.floor(Math.random()*noteData.length));
+  },Math.round(1000/maxRate));
+}
+
+// ═══ OFFLINE EARNINGS ═══
+function initOfflineEarnings(){
+  const last=_saved?.lastOnline;
+  if(!last)return;
+  const secs=Math.min((Date.now()-last)/1000,8*3600);
+  if(secs<60)return;
+  const autoRates={auto_lv1:1,auto_lv2:3,auto_lv3:8};
+  const autoRate=owned.autoTappers.reduce((m,id)=>Math.max(m,autoRates[id]||0),0);
+  const earned=Math.floor(secs*(0.5+autoRate));
+  notes+=earned;totalNotes+=earned;updateCurrencyDisplay();saveState();
+  const mins=Math.floor(secs/60),hrs=Math.floor(mins/60);
+  document.getElementById('offlineTime').textContent=
+    (hrs>0?hrs+'시간 ':'')+`${mins%60}분 동안 피아노가 연주됐어요`;
+  document.getElementById('offlineEarned').textContent=`♪ ${formatNum(earned)} 획득!`;
+  document.getElementById('offlineModal').style.display='flex';
+}
+function closeOfflineModal(){document.getElementById('offlineModal').style.display='none'}
 
 // ═══ AD STICKER ═══
 // 🛍️ 상품 데이터 — 여기서 직접 수정하세요
@@ -939,6 +1042,9 @@ document.getElementById('adInner').addEventListener('click',()=>{
 });
 
 loadAds();
+updateAutoTap();
+initOfflineEarnings();
+checkAchievements();
 </script>
 </body>
 </html>
