@@ -312,6 +312,38 @@
   .skin-rosegold .piano-fallboard{background:linear-gradient(180deg,#281810,#1c0e08)}
   .skin-rosegold .piano-felt{background:#8b2020}
 
+  /* ─── Pixel Cat ─── */
+  .pixel-cat{position:absolute;z-index:3;pointer-events:none;bottom:120px;transition:left .6s ease-in-out}
+  .pixel-cat.face-left .cat-sprite{transform:scale(3) scaleX(-1);transform-origin:bottom right}
+  .cat-sprite{width:1px;height:1px;transform:scale(3);transform-origin:bottom left;image-rendering:pixelated}
+  .cat-sprite.idle{box-shadow:
+    1px 0 0 #c90,6px 0 0 #c90,
+    0px 1px 0 #c90,1px 1px 0 #fc0,6px 1px 0 #fc0,7px 1px 0 #c90,
+    1px 2px 0 #fc0,2px 2px 0 #fd2,3px 2px 0 #fd2,4px 2px 0 #fd2,5px 2px 0 #fd2,6px 2px 0 #fc0,
+    1px 3px 0 #fc0,2px 3px 0 #2a2,3px 3px 0 #fd2,4px 3px 0 #fd2,5px 3px 0 #2a2,6px 3px 0 #fc0,
+    2px 4px 0 #fc0,3px 4px 0 #f9a,4px 4px 0 #fd2,5px 4px 0 #fc0,
+    1px 5px 0 #c90,2px 5px 0 #fd2,3px 5px 0 #fd2,4px 5px 0 #fd2,5px 5px 0 #fd2,6px 5px 0 #c90,
+    1px 6px 0 #c90,2px 6px 0 #fd2,3px 6px 0 #fd2,4px 6px 0 #fd2,5px 6px 0 #fd2,6px 6px 0 #c90,
+    1px 7px 0 #a70,2px 7px 0 #a70,5px 7px 0 #a70,6px 7px 0 #a70}
+  .cat-sprite.walk-1{box-shadow:
+    1px 0 0 #c90,6px 0 0 #c90,
+    0px 1px 0 #c90,1px 1px 0 #fc0,6px 1px 0 #fc0,7px 1px 0 #c90,
+    1px 2px 0 #fc0,2px 2px 0 #fd2,3px 2px 0 #fd2,4px 2px 0 #fd2,5px 2px 0 #fd2,6px 2px 0 #fc0,
+    1px 3px 0 #fc0,2px 3px 0 #2a2,3px 3px 0 #fd2,4px 3px 0 #fd2,5px 3px 0 #2a2,6px 3px 0 #fc0,
+    0px 4px 0 #c90,1px 4px 0 #fd2,2px 4px 0 #fd2,3px 4px 0 #fd2,4px 4px 0 #fd2,5px 4px 0 #fd2,6px 4px 0 #c90,7px 4px 0 #c90,
+    1px 5px 0 #c90,2px 5px 0 #fd2,3px 5px 0 #fd2,4px 5px 0 #fd2,5px 5px 0 #fd2,6px 5px 0 #c90,
+    8px 3px 0 #fc0,8px 4px 0 #fc0,
+    0px 6px 0 #a70,3px 6px 0 #a70,6px 6px 0 #a70}
+  .cat-sprite.walk-2{box-shadow:
+    1px 0 0 #c90,6px 0 0 #c90,
+    0px 1px 0 #c90,1px 1px 0 #fc0,6px 1px 0 #fc0,7px 1px 0 #c90,
+    1px 2px 0 #fc0,2px 2px 0 #fd2,3px 2px 0 #fd2,4px 2px 0 #fd2,5px 2px 0 #fd2,6px 2px 0 #fc0,
+    1px 3px 0 #fc0,2px 3px 0 #2a2,3px 3px 0 #fd2,4px 3px 0 #fd2,5px 3px 0 #2a2,6px 3px 0 #fc0,
+    0px 4px 0 #c90,1px 4px 0 #fd2,2px 4px 0 #fd2,3px 4px 0 #fd2,4px 4px 0 #fd2,5px 4px 0 #fd2,6px 4px 0 #c90,7px 4px 0 #c90,
+    1px 5px 0 #c90,2px 5px 0 #fd2,3px 5px 0 #fd2,4px 5px 0 #fd2,5px 5px 0 #fd2,6px 5px 0 #c90,
+    8px 3px 0 #fc0,8px 4px 0 #fc0,
+    1px 6px 0 #a70,4px 6px 0 #a70,7px 6px 0 #a70}
+
   @media(max-width:1100px){.white-key{width:44px;height:200px}.black-key{width:28px;height:128px}}
   @media(max-width:780px){.white-key{width:36px;height:175px}.black-key{width:24px;height:110px}.brand{font-size:1rem}.top-hud{gap:8px;padding:8px 10px}.shop-panel{width:340px}.piano-fallboard{height:20px}}
   @media(max-width:550px){.white-key{width:28px;height:150px}.black-key{width:18px;height:92px}.hint{display:none}.shop-panel{width:100vw}.piano-fallboard{height:16px}.piano-felt{height:4px}}
@@ -421,6 +453,7 @@ if(!owned.modes) owned.modes=['dreamy','bright','deep'];
 let stats=_saved?.stats??{fury:0,keys:0};
 if(!owned.achievements) owned.achievements=[];
 if(!owned.autoTappers)  owned.autoTappers=[];
+if(!owned.cats)         owned.cats=[];
 function saveState(){localStorage.setItem('sp_save',JSON.stringify({notes,totalNotes,equipped,owned,stats,lastOnline:Date.now()}))}
 
 // ═══ ACHIEVEMENTS ═══
@@ -483,6 +516,9 @@ const shopItems={
     {id:'auto_lv1',name:'자동 연주 Ⅰ', desc:'1회/초 자동 연주', icon:'🤖', cost:2000,  rate:1, prereq:null},
     {id:'auto_lv2',name:'자동 연주 Ⅱ', desc:'3회/초 자동 연주', icon:'🦾', cost:8000,  rate:3, prereq:'auto_lv1'},
     {id:'auto_lv3',name:'자동 연주 Ⅲ', desc:'8회/초 자동 연주', icon:'⚡', cost:30000, rate:8, prereq:'auto_lv2'},
+  ],
+  cats:[
+    {id:'pixel_cat',name:'피아노 고양이',desc:'고양이가 건반을 밟아요',icon:'🐱',cost:5000},
   ],
 };
 
@@ -707,6 +743,9 @@ const blackKeyData=[];
 noteData.forEach((n,i)=>{if(n.type==='black'){const el=document.createElement('div');el.className='black-key';el.dataset.index=i;el.innerHTML=`<span class="label">${n.key.toUpperCase()}</span>`;const pw=noteData.slice(0,i).filter(x=>x.type==='white').length;blackKeyData.push({el,prevWhiteIdx:pw-1});el.style.top='0px';piano.appendChild(el);pianoKeyEls[i]=el;el.addEventListener('pointerdown',e=>{e.preventDefault();triggerKey(i)});el.addEventListener('pointerenter',e=>{if(e.buttons)triggerKey(i)});el.addEventListener('pointerup',()=>releaseKey(i));el.addEventListener('pointerleave',()=>releaseKey(i))}});
 function repositionBlackKeys(){blackKeyData.forEach(({el,prevWhiteIdx})=>{const wk=whiteKeyEls[prevWhiteIdx];if(wk)el.style.left=(wk.offsetLeft+wk.offsetWidth-17)+'px'});}
 repositionBlackKeys();
+// 픽셀 고양이 DOM
+const pixelCatEl=document.createElement('div');pixelCatEl.className='pixel-cat';pixelCatEl.id='pixelCat';pixelCatEl.style.display='none';
+const catSpriteEl=document.createElement('div');catSpriteEl.className='cat-sprite idle';pixelCatEl.appendChild(catSpriteEl);piano.appendChild(pixelCatEl);
 // 저장된 스킨 복원
 if(_saved)applySkin();
 // 저장된 통화 표시
@@ -731,7 +770,7 @@ document.addEventListener('keyup',e=>{if(e.code==='Space'){sustainOn=false;docum
 // ═══ PARTICLES ═══
 const canvas=document.getElementById('bg'),ctx=canvas.getContext('2d');
 let particles=[];let bgPulse={r:8,g:8,b:12,target:{r:8,g:8,b:12}};
-function resize(){canvas.width=innerWidth;canvas.height=innerHeight}resize();let _resizeTimer;addEventListener('resize',()=>{resize();clearTimeout(_resizeTimer);_resizeTimer=setTimeout(repositionBlackKeys,50)});
+function resize(){canvas.width=innerWidth;canvas.height=innerHeight}resize();let _resizeTimer;addEventListener('resize',()=>{resize();clearTimeout(_resizeTimer);_resizeTimer=setTimeout(()=>{repositionBlackKeys();if(catState.active)positionCatOnKey(catState.currentKeyIdx)},50)});
 
 const particleThemes={
   default:(cx,cy,count,speed,sz,mc)=>{const hc=['#569cff','#ff6fd8'];const rc=['#ff4400','#ff6600','#ffaa00','#fff'];const use=rageLevel>15?rc:mc;for(let i=0;i<count;i++)particles.push({x:cx,y:cy,vx:(Math.random()-.5)*speed*2,vy:-Math.random()*speed-1,life:1,decay:.005+Math.random()*.013,size:sz*(.4+Math.random()),color:use[~~(Math.random()*use.length)],glow:Math.random()>.3,shape:'circle'})},
@@ -842,6 +881,7 @@ function renderShop(){
     {key:'skins',title:'🎹',items:shopItems.skins,ownedKey:'skins',equippedKey:'skin'},
     {key:'ambients',title:'🌧️',items:shopItems.ambients,ownedKey:'ambients',equippedKey:null},
     {key:'autoTappers',title:'🤖',items:shopItems.autoTappers,ownedKey:'autoTappers',equippedKey:null},
+    {key:'cats',title:'🐱',items:shopItems.cats,ownedKey:'cats',equippedKey:null},
   ];
 
   cats.forEach(cat=>{
@@ -905,6 +945,7 @@ function buyItem(cat,id,cost){
   else if(cat==='skins')owned.skins.push(id);
   else if(cat==='ambients')owned.ambients.push(id);
   else if(cat==='autoTappers'){owned.autoTappers.push(id);updateAutoTap();checkAchievements();}
+  else if(cat==='cats'){owned.cats.push(id);updatePixelCat();}
 
   // Auto equip
   if(cat==='tones')equipped.tone=id;
@@ -958,6 +999,69 @@ function updateAutoTap(){
   autoTapInterval=setInterval(()=>{
     triggerKey(Math.floor(Math.random()*noteData.length));
   },Math.round(1000/maxRate));
+}
+
+// ═══ PIXEL CAT ═══
+const _whiteKeyIndices=noteData.map((n,i)=>n.type==='white'?i:-1).filter(i=>i>=0);
+let catState={active:false,currentKeyIdx:0,timer:null,walkFrame:1,walkAnimTimer:null,direction:1};
+
+function startPixelCat(){
+  if(catState.active)return;
+  catState.active=true;
+  pixelCatEl.style.display='block';
+  catState.currentKeyIdx=_whiteKeyIndices[Math.floor(Math.random()*_whiteKeyIndices.length)];
+  positionCatOnKey(catState.currentKeyIdx);
+  catScheduleNext();
+}
+function stopPixelCat(){
+  catState.active=false;
+  clearTimeout(catState.timer);clearInterval(catState.walkAnimTimer);
+  pixelCatEl.style.display='none';
+}
+function catScheduleNext(){
+  if(!catState.active)return;
+  catSpriteEl.className='cat-sprite idle';
+  catState.timer=setTimeout(catPickTarget,800+Math.random()*1700);
+}
+function catPickTarget(){
+  if(!catState.active)return;
+  const curWPos=_whiteKeyIndices.indexOf(catState.currentKeyIdx);
+  const step=(Math.random()>.5?1:-1)*(1+Math.floor(Math.random()*3));
+  const newWPos=Math.max(0,Math.min(_whiteKeyIndices.length-1,curWPos+step));
+  const targetIdx=_whiteKeyIndices[newWPos];
+  catState.direction=newWPos>curWPos?1:-1;
+  if(catState.direction===-1)pixelCatEl.classList.add('face-left');
+  else pixelCatEl.classList.remove('face-left');
+  // walk animation frames
+  catState.walkAnimTimer=setInterval(()=>{
+    catState.walkFrame=catState.walkFrame===1?2:1;
+    catSpriteEl.className='cat-sprite walk-'+catState.walkFrame;
+  },200);
+  positionCatOnKey(targetIdx);
+  catState.timer=setTimeout(()=>{
+    clearInterval(catState.walkAnimTimer);
+    catState.currentKeyIdx=targetIdx;
+    triggerKey(targetIdx);
+    setTimeout(()=>releaseKey(targetIdx),150);
+    // occasionally press nearby black key
+    if(Math.random()>.6){
+      const bk=catFindNearbyBlack(targetIdx);
+      if(bk!==null){triggerKey(bk);setTimeout(()=>releaseKey(bk),120);}
+    }
+    catScheduleNext();
+  },620);
+}
+function positionCatOnKey(idx){
+  const el=pianoKeyEls[idx];if(!el)return;
+  pixelCatEl.style.left=(el.offsetLeft+el.offsetWidth/2-12)+'px';
+}
+function catFindNearbyBlack(wIdx){
+  for(const off of[1,-1]){const ci=wIdx+off;if(ci>=0&&ci<noteData.length&&noteData[ci].type==='black')return ci;}
+  return null;
+}
+function updatePixelCat(){
+  if(owned.cats.includes('pixel_cat'))startPixelCat();
+  else stopPixelCat();
 }
 
 // ═══ OFFLINE EARNINGS ═══
@@ -1043,6 +1147,7 @@ document.getElementById('adInner').addEventListener('click',()=>{
 
 loadAds();
 updateAutoTap();
+updatePixelCat();
 initOfflineEarnings();
 checkAchievements();
 </script>
